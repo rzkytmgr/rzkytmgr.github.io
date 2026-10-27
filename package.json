@@ -15,8 +15,8 @@
         "lint": "eslint",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "typecheck": "astro check",
-        "test": "vitest run",
+        "typecheck": "astro check --minimumSeverity warning",
+        "test": "vitest run --silent --reporter=minimal",
         "prepare": "husky"
     },
     "dependencies": {

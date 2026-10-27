@@ -22,7 +22,7 @@ const byNewest = (
 ) => Date.parse(b.data.date) - Date.parse(a.data.date);
 
 const writeupItems = writeups.sort(byNewest).slice(0, 6);
-const showcaseItems = showcases.sort(byNewest).slice(0, 3);
+const showcaseItems = showcases.sort(byNewest).slice(0, 2);
 const laboratoryItems = laboratory.sort(byNewest).slice(0, 4);
 const explorationItems = exploration.sort(byNewest).slice(0, 4);
 ---
@@ -72,7 +72,7 @@ const explorationItems = exploration.sort(byNewest).slice(0, 4);
             linkHref="/showcase"
             class="mb-8"
         >
-            <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
                 {showcaseItems.map((entry) => (
                     <div>
                         <ShowcaseCard showcase={entry.data} />

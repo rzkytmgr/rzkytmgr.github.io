@@ -1,0 +1,43 @@
+---
+import { parsePublishDate } from "../utils/date";
+
+interface Props {
+    item: {
+        id: string;
+        title: string;
+        category: string;
+        link: string;
+        date: string;
+    };
+    index: number;
+}
+
+const { item: data, index } = Astro.props;
+const retrieved = parsePublishDate(data.date);
+const domain = new URL(data.link).hostname;
+---
+
+<li class="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-2.5 py-2.5 text-sm leading-relaxed">
+    <span
+        aria-hidden="true"
+        class="min-w-5 select-none text-xs word-spacing-wide font-medium text-neutral-400"
+    >
+        [{index + 1}]
+    </span>
+
+    <p class="min-w-0 text-neutral-500 dark:text-zinc-400">
+        <a
+            href={data.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-zinc-950 underline decoration-zinc-400 underline-offset-4 transition-colors duration-100 hover:text-journal-accent-text hover:decoration-journal-accent-text focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-journal-accent dark:text-zinc-50"
+        >
+            {`"${data.title}"`}
+        </a>
+        . <span class="text-zinc-950/70 dark:text-zinc-100/70">{domain}</span>.{" "}
+        {retrieved.year}.{" "}
+        <span class="text-xs word-spacing-wide text-neutral-400 dark:text-neutral-600">
+            {data.category}
+        </span>
+    </p>
+</li>

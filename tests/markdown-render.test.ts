@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderMarkdown } from "@/utils/server/markdown-render";
+import { renderMarkdown } from "@/src/markdown/markdown-render";
 
 describe("renderMarkdown", () => {
     it("injects a language label with a copy button for fenced code blocks", async () => {
@@ -10,7 +10,28 @@ describe("renderMarkdown", () => {
         expect(html).toContain("TypeScript");
         expect(html).toContain("data-code-block-copy");
         expect(html).toContain("code-block-label__copy");
+        expect(html).toContain("code-block-label__copy-slot");
+        expect(html).toContain(">Copy</span>");
+        expect(html).toContain(">Copied</span>");
         expect(html).toContain("<button");
+    });
+
+    it("uses the title meta as the code block label instead of the language", async () => {
+        const html = await renderMarkdown(
+            '```ts title="app/page.tsx"\nconst x = 1;\n```',
+        );
+
+        expect(html).toContain("app/page.tsx");
+        expect(html).not.toContain("TypeScript");
+        expect(html).not.toContain("figcaption");
+    });
+
+    it("uses the title meta as the label even for unknown languages", async () => {
+        const html = await renderMarkdown(
+            '```text title="notes.txt"\nhello\n```',
+        );
+
+        expect(html).toContain("notes.txt");
     });
 
     it("renders GitHub-style alerts with the marker stripped", async () => {

@@ -1,0 +1,64 @@
+---
+interface Props {
+    showcase: {
+        id: string;
+        slug: string;
+        title: string;
+        description: string;
+        category: string;
+        tech_stack: string[];
+        date: string;
+        reading_time: string;
+        is_archive: boolean;
+        thumbnail: string;
+        link?: {
+            repository?: string;
+            preview?: string;
+        };
+    };
+}
+
+const { showcase: data } = Astro.props;
+---
+
+<a
+    href={`/showcase/${data.slug}`}
+    aria-label={`Read more about ${data.title}`}
+    class="group grid h-[280px] grid-cols-2 gap-0 overflow-hidden rounded-lg border border-smooth-border bg-surface focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-journal-accent dark:bg-surface lg:h-[320px]"
+>
+    <div class="relative h-full overflow-hidden">
+        <img
+            src={data.thumbnail}
+            alt={data.title}
+            width="1200"
+            height="750"
+            loading="lazy"
+            decoding="async"
+            class="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03] motion-reduce:transition-none"
+        />
+
+        {data.is_archive && (
+            <span class="absolute top-2 left-2 rounded-full border border-warning-border bg-warning-bg px-2 py-0.5 text-xs word-spacing-wide font-medium text-warning-text shadow-sm">
+                unmaintained
+            </span>
+        )}
+    </div>
+
+    <div class="flex min-w-0 flex-col justify-center overflow-hidden p-5 lg:p-8">
+        <p class="truncate text-xs word-spacing-wide font-medium text-journal-accent-text">
+            {data.category}
+        </p>
+
+        <h3 class="mt-2 line-clamp-2 text-lg leading-snug font-bold text-zinc-950 transition-colors duration-150 group-hover:text-journal-accent-text dark:text-zinc-50">
+            {data.title}
+        </h3>
+
+        <p class="mt-3 line-clamp-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+            {data.description}
+        </p>
+
+        <span class="mt-4 inline-flex text-xs word-spacing-wide font-medium text-neutral-600 underline transition-colors duration-100 group-hover:text-journal-accent-text">
+            see more
+        </span>
+    </div>
+</a>

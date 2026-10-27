@@ -1,0 +1,62 @@
+---
+import { socialIcon } from "./icons";
+
+interface Props {
+    title: string;
+    social: { name: string; href: string }[];
+    description: string;
+    copyright: string;
+}
+
+const { title, social, description, copyright } = Astro.props;
+
+const socialIconButtonClass =
+    "inline-flex size-8 items-center justify-center text-neutral-500 transition-colors duration-150 hover:text-journal-accent-text motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-journal-accent";
+---
+
+<hr class="border-smooth-border" />
+
+<footer class="mx-auto w-full max-w-6xl space-y-16 px-5 pt-16 sm:px-6">
+    <section class="flex flex-col gap-8 md:flex-row md:items-center md:justify-between md:gap-12">
+        <div class="flex flex-col">
+            <a
+                href="/"
+                class="flex w-fit items-center text-sm font-bold tracking-tight transition-colors hover:text-journal-accent-text focus-visible:text-journal-accent-text"
+            >
+                {title}
+            </a>
+
+            <p class="mt-3 max-w-xs text-sm text-neutral-500">{description}</p>
+
+            <ul class="mt-5 flex items-center gap-2.5">
+                {social.map(({ name, href }) => (
+                    <li>
+                        <a
+                            href={href}
+                            aria-label={name}
+                            title={name}
+                            target={
+                                href.startsWith("http") ? "_blank" : undefined
+                            }
+                            rel={
+                                href.startsWith("http")
+                                    ? "noopener noreferrer"
+                                    : undefined
+                            }
+                            class={socialIconButtonClass}
+                        >
+                            <Fragment set:html={socialIcon(name)} />
+                        </a>
+                    </li>
+                ))}
+            </ul>
+        </div>
+    </section>
+
+    <section class="flex flex-col gap-4 border-t border-smooth-border py-8 text-xs text-neutral-500 sm:flex-row sm:items-center sm:justify-between">
+        <span>
+            © {new Date().getFullYear()} {copyright}
+        </span>
+        <span>Made in Indonesia</span>
+    </section>
+</footer>

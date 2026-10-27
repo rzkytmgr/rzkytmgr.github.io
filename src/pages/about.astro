@@ -1,0 +1,29 @@
+---
+import { getCollection, render } from "astro:content";
+import MainLayout from "../layouts/main-layout.astro";
+import { config } from "../config";
+
+const about = config.ui.pages.about;
+const entry = (await getCollection("about"))[0];
+const { Content } = await render(entry);
+---
+
+<MainLayout title={about.heading} description={about.description}>
+    <main
+        id="main-content"
+        class="m-auto w-full max-w-6xl px-5 py-20 sm:px-6 md:py-32"
+    >
+        <div class="max-w-3xl">
+            <h1 class="sr-only">{about.heading}</h1>
+
+            <section>
+                <h2 class="mb-4 font-mono text-xs uppercase tracking-wider text-neutral-500">
+                    About this place
+                </h2>
+                <div class="markdown-body font-serif text-base">
+                    <Content />
+                </div>
+            </section>
+        </div>
+    </main>
+</MainLayout>

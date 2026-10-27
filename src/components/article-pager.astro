@@ -32,7 +32,7 @@ const { previous, next } = Astro.props;
                     <Fragment
                         set:html={icon(
                             "move-left",
-                            "size-3 transition-transform group-hover:-translate-x-1",
+                            "size-3 transition-transform group-active:-translate-x-1",
                         )}
                     />
                     Previous
@@ -55,7 +55,7 @@ const { previous, next } = Astro.props;
                     <Fragment
                         set:html={icon(
                             "move-right",
-                            "size-3 transition-transform group-hover:translate-x-1",
+                            "size-3 transition-transform group-active:translate-x-1",
                         )}
                     />
                 </span>

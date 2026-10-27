@@ -15,17 +15,6 @@ export type AuthorType = Readonly<{
     social: AuthorSocialType[];
 }>;
 
-export type GiscusConfigType = Readonly<{
-    repo: string;
-    repoId: string;
-    category: string;
-    categoryId: string;
-    mapping: string;
-    reactionsEnabled: boolean;
-    inputPosition: "top" | "bottom";
-    lang: string;
-}>;
-
 export type ResumeItemType = Readonly<{
     role: string;
     company?: string;
@@ -54,7 +43,6 @@ export type AppConfigType = Readonly<{
     url: string;
     author: AuthorType;
     rss: string;
-    giscus?: GiscusConfigType;
     resume?: ResumeType;
     ui: Readonly<{
         home: Readonly<{
@@ -71,6 +59,10 @@ export type AppConfigType = Readonly<{
         }>;
         pages: Readonly<{
             showcase: Readonly<{
+                heading: string;
+                description: string;
+            }>;
+            bookmarks: Readonly<{
                 heading: string;
                 description: string;
             }>;

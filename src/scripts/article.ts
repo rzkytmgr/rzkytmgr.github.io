@@ -1,3 +1,178 @@
+const CLAPS_STORAGE_KEY = "claps";
+
+function readClaps(): string[] {
+    try {
+        const raw = localStorage.getItem(CLAPS_STORAGE_KEY);
+
+        if (!raw) {
+            return [];
+        }
+
+        const parsed: unknown = JSON.parse(raw);
+
+        if (!Array.isArray(parsed)) {
+            return [];
+        }
+
+        return parsed.filter(
+            (entry): entry is string => typeof entry === "string",
+        );
+    } catch {
+        return [];
+    }
+}
+
+function writeClaps(hrefs: string[]) {
+    try {
+        localStorage.setItem(CLAPS_STORAGE_KEY, JSON.stringify(hrefs));
+    } catch {
+        // Storage may be unavailable (private mode, quota) — best-effort only.
+    }
+}
+
+function setupArticleClap() {
+    const actions = document.querySelector<HTMLElement>(
+        "[data-article-actions]",
+    );
+
+    if (!actions) {
+        return;
+    }
+
+    const button = actions.querySelector<HTMLButtonElement>("[data-clap]");
+
+    if (!button) {
+        return;
+    }
+
+    const href = window.location.pathname;
+
+    const applyState = () => {
+        const clapped = readClaps().includes(href);
+
+        button.setAttribute("data-clapped", String(clapped));
+        button.setAttribute("aria-pressed", String(clapped));
+    };
+
+    button.addEventListener("click", () => {
+        const likes = readClaps();
+
+        if (!likes.includes(href)) {
+            writeClaps([...likes, href]);
+        }
+
+        applyState();
+    });
+
+    applyState();
+}
+
+const BOOKMARKS_STORAGE_KEY = "bookmarks";
+
+type BookmarkEntry = {
+    href: string;
+    title: string;
+    description: string;
+    tag: string;
+    savedAt: string;
+};
+
+function readBookmarks(): BookmarkEntry[] {
+    try {
+        const raw = localStorage.getItem(BOOKMARKS_STORAGE_KEY);
+
+        if (!raw) {
+            return [];
+        }
+
+        const parsed: unknown = JSON.parse(raw);
+
+        if (!Array.isArray(parsed)) {
+            return [];
+        }
+
+        return parsed.filter(
+            (entry): entry is BookmarkEntry =>
+                Boolean(entry) &&
+                typeof entry === "object" &&
+                typeof (entry as BookmarkEntry).href === "string" &&
+                typeof (entry as BookmarkEntry).title === "string" &&
+                typeof (entry as BookmarkEntry).savedAt === "string",
+        );
+    } catch {
+        return [];
+    }
+}
+
+function writeBookmarks(entries: BookmarkEntry[]) {
+    try {
+        localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(entries));
+    } catch {
+        // Storage may be unavailable (private mode, quota) — bookmarking is
+        // best-effort, so fail silently.
+    }
+}
+
+function getBookmarkActions() {
+    return {
+        list: readBookmarks,
+        set: writeBookmarks,
+    };
+}
+
+function setupArticleBookmark() {
+    const actions = document.querySelector<HTMLElement>(
+        "[data-article-actions]",
+    );
+
+    if (!actions) {
+        return;
+    }
+
+    const button = actions.querySelector<HTMLButtonElement>("[data-bookmark]");
+
+    if (!button) {
+        return;
+    }
+
+    const { list, set } = getBookmarkActions();
+    const href = window.location.pathname;
+
+    const applyState = () => {
+        const bookmarked = list().some((entry) => entry.href === href);
+
+        button.setAttribute("aria-pressed", String(bookmarked));
+        button.setAttribute(
+            "aria-label",
+            bookmarked ? "Remove bookmark" : "Bookmark article",
+        );
+        button.title = bookmarked ? "Remove bookmark" : "Bookmark article";
+    };
+
+    button.addEventListener("click", () => {
+        const entries = list();
+
+        if (entries.some((entry) => entry.href === href)) {
+            set(entries.filter((entry) => entry.href !== href));
+        } else {
+            set([
+                ...entries,
+                {
+                    href,
+                    title: button.dataset.bookmarkTitle ?? document.title,
+                    description: button.dataset.bookmarkDescription ?? "",
+                    tag: button.dataset.bookmarkTag ?? "",
+                    savedAt: new Date().toISOString(),
+                },
+            ]);
+        }
+
+        applyState();
+    });
+
+    applyState();
+}
+
 const tocNav = document.querySelector<HTMLElement>("[data-toc-for]");
 
 if (tocNav) {
@@ -64,59 +239,6 @@ if (tocNav) {
 const actions = document.querySelector<HTMLElement>("[data-article-actions]");
 
 if (actions) {
-    const commentCount = actions.querySelector<HTMLElement>(
-        "[data-comment-count]",
-    );
-
-    const setCount = (value: number) => {
-        if (!commentCount) {
-            return;
-        }
-
-        commentCount.textContent = String(value);
-        commentCount.removeAttribute("hidden");
-    };
-
-    window.addEventListener("message", (event) => {
-        if (event.origin !== "https://giscus.app") {
-            return;
-        }
-
-        const data = event.data as {
-            giscus?: {
-                discussion?: { totalCommentCount?: number };
-                error?: string;
-            };
-        };
-
-        if (data?.giscus?.discussion) {
-            setCount(data.giscus.discussion.totalCommentCount ?? 0);
-        } else if (
-            typeof data?.giscus?.error === "string" &&
-            data.giscus.error.includes("Discussion not found")
-        ) {
-            setCount(0);
-        }
-    });
-
-    actions
-        .querySelector<HTMLElement>("[data-jump-comments]")
-        ?.addEventListener("click", () => {
-            const comments = document.getElementById("comments");
-
-            if (!comments) {
-                return;
-            }
-
-            const prefersReducedMotion = window.matchMedia(
-                "(prefers-reduced-motion: reduce)",
-            ).matches;
-
-            comments.scrollIntoView({
-                behavior: prefersReducedMotion ? "auto" : "smooth",
-            });
-        });
-
     actions
         .querySelector<HTMLElement>("[data-share]")
         ?.addEventListener("click", () => {
@@ -131,5 +253,8 @@ if (actions) {
             navigator.clipboard?.writeText(url);
         });
 }
+
+setupArticleBookmark();
+setupArticleClap();
 
 export {};

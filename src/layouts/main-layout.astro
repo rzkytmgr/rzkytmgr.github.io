@@ -60,15 +60,10 @@ const ogImage = new URL("/og.png", Astro.site);
             (function () {
                 try {
                     var stored = localStorage.getItem("theme");
-                    var isDaytime =
-                        (new Date().getHours() >= 6) &
-                        (new Date().getHours() < 18);
                     var theme =
                         stored === "clean-light" || stored === "charcoal"
                             ? stored
-                            : isDaytime
-                              ? "clean-light"
-                              : "charcoal";
+                            : "clean-light";
                     document.documentElement.setAttribute("data-theme", theme);
                 } catch (e) {}
             })();

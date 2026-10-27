@@ -3,21 +3,8 @@ const DARK_THEME = "charcoal";
 const SITE_THEMES = [LIGHT_THEME, DARK_THEME] as const;
 const THEME_STORAGE_KEY = "theme";
 
-const DAWN_HOUR = 6;
-const DUSK_HOUR = 18;
-
 function isSiteTheme(value: string): value is (typeof SITE_THEMES)[number] {
     return (SITE_THEMES as readonly string[]).includes(value);
-}
-
-function isDaytime(date = new Date()): boolean {
-    const hour = date.getHours();
-
-    return hour >= DAWN_HOUR && hour < DUSK_HOUR;
-}
-
-function getDefaultTheme(): string {
-    return isDaytime() ? LIGHT_THEME : DARK_THEME;
 }
 
 function applyTheme(theme: string) {
@@ -29,12 +16,12 @@ function applyTheme(theme: string) {
 
 function getInitialTheme(): string {
     if (typeof localStorage === "undefined") {
-        return getDefaultTheme();
+        return LIGHT_THEME;
     }
 
     const stored = localStorage.getItem(THEME_STORAGE_KEY);
 
-    return stored && isSiteTheme(stored) ? stored : getDefaultTheme();
+    return stored && isSiteTheme(stored) ? stored : LIGHT_THEME;
 }
 
 applyTheme(getInitialTheme());
@@ -58,9 +45,13 @@ function setSidebarOpen(open: boolean) {
     document
         .getElementById("sidebar-toggle")
         ?.setAttribute("aria-expanded", String(open));
-    document
-        .getElementById("sidebar")
-        ?.setAttribute("aria-hidden", String(!open));
+
+    const sidebar = document.getElementById("sidebar");
+
+    if (sidebar) {
+        sidebar.setAttribute("aria-hidden", String(!open));
+        sidebar.toggleAttribute("inert", !open);
+    }
 }
 
 document

@@ -3,10 +3,8 @@ import { getCollection, render } from "astro:content";
 import MainLayout from "../../layouts/main-layout.astro";
 import ArticleHeader from "../../components/article-header.astro";
 import ArticlePager from "../../components/article-pager.astro";
-import GiscusComments from "../../components/giscus-comments.astro";
 import TableOfContents from "../../components/table-of-contents.astro";
-import { config } from "../../config";
-import { estimateReadingTime, extractHeadings } from "../../utils/markdown";
+import { extractHeadings } from "../../utils/markdown";
 
 export async function getStaticPaths() {
     const writeups = await getCollection("writeups");
@@ -67,8 +65,6 @@ const next =
                     <div class="markdown-body font-serif text-base">
                         <Content />
                     </div>
-
-                    <GiscusComments giscus={config.giscus} />
 
                     <ArticlePager previous={previous} next={next} />
                 </div>

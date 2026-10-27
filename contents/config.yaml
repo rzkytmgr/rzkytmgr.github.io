@@ -13,17 +13,6 @@ author:
         - name: LinkedIn
           href: https://www.linkedin.com/in/rzkytmgr/
 rss: /rss.xml
-# giscus comment system — fill in the values from https://giscus.app
-# (requires a public repo with Discussions enabled and the giscus app installed).
-giscus:
-    repo: "rzkytmgr/rzkytmgr"
-    repoId: "R_kgDOH3cKcA"
-    category: "General"
-    categoryId: "DIC_kwDOH3cKcM4DCr3r"
-    mapping: pathname
-    reactionsEnabled: false
-    inputPosition: top
-    lang: en
 ui:
     home:
         hero:
@@ -38,6 +27,9 @@ ui:
         showcase:
             heading: Showcase
             description: Projects I have built and worked on. Selected works spanning product design, development, and engineering.
+        bookmarks:
+            heading: Bookmarks
+            description: Articles I have saved for later, straight from this browser.
         writeups:
             heading: Writeups
             description: Long-form notes on software engineering, architecture, and systems. The lessons I want to remember.

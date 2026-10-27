@@ -8,8 +8,6 @@
 }
 @import "@fontsource-variable/source-serif-4/index.css";
 @import "@fontsource-variable/jetbrains-mono/index.css";
-@import "@fontsource/montserrat/600.css";
-@import "@fontsource/montserrat/700.css";
 
 @import "tailwindcss";
 
@@ -20,7 +18,6 @@
     --font-mona-sans: "Mona Sans Variable";
     --font-source-serif-4: "Source Serif 4 Variable";
     --font-jetbrains-mono: "JetBrains Mono Variable";
-    --font-montserrat: "Montserrat";
 
     --background: #f8fafc;
     --foreground: #0f172a;
@@ -151,12 +148,28 @@ html {
     word-spacing: 0.15em;
 }
 
-@utility word-spacing-wider {
-    word-spacing: 0.3em;
+/* Article bookmark button (filled + accented when saved) */
+
+[data-article-actions] [data-bookmark][aria-pressed="true"] {
+    color: var(--journal-accent-text);
 }
 
-.font-logo {
-    font-family: var(--font-montserrat), ui-sans-serif, system-ui, sans-serif;
+[data-article-actions] [data-bookmark][aria-pressed="true"] svg {
+    fill: currentColor;
+}
+
+[data-article-actions] [data-bookmark][aria-pressed="false"] svg {
+    fill: none;
+}
+
+/* Article clap button (accented once clapped) */
+
+[data-article-actions] [data-clap][data-clapped="true"] {
+    color: var(--journal-accent-text);
+}
+
+[data-article-actions] [data-clap][data-clapped="true"] svg {
+    fill: currentColor;
 }
 
 #app {
@@ -165,6 +178,15 @@ html {
 
 html[data-sidebar-open] #app {
     transform: translateX(288px);
+}
+
+/* Mobile sidebar default state is off-screen; shown via data-sidebar-open. */
+#sidebar {
+    transform: translateX(-100%);
+}
+
+html[data-sidebar-open] #sidebar {
+    transform: none;
 }
 
 @media (min-width: 768px) {

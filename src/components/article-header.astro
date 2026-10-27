@@ -55,7 +55,7 @@ const shareButtonClass =
 
 const shareIconHtml = icon(
     "share",
-    "size-4 transition-transform duration-300 group-hover:rotate-12 motion-reduce:transition-none motion-reduce:transform-none",
+    "size-4 transition-transform duration-300 group-active:-translate-y-0.5 motion-reduce:transition-none motion-reduce:transform-none",
 );
 ---
 
@@ -88,34 +88,35 @@ const shareIconHtml = icon(
                     <button
                         type="button"
                         aria-label="Like article"
+                        aria-pressed="false"
                         title="Like article"
-                        class="group inline-flex size-8 cursor-pointer items-center justify-center rounded-md p-2 text-neutral-500 transition-colors duration-100 hover:text-journal-accent-text motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-journal-accent"
+                        data-clap
+                        class="group relative inline-flex size-8 cursor-pointer items-center justify-center rounded-md p-2 text-neutral-500 transition-colors duration-100 hover:text-journal-accent-text motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-journal-accent"
                     >
                         <Fragment
                             set:html={icon(
-                                "thumbs-up",
-                                "size-4 transition-transform duration-300 group-hover:rotate-12 motion-reduce:transition-none motion-reduce:transform-none",
+                                "clap",
+                                "size-4 transition-transform duration-300 group-active:-translate-y-0.5 motion-reduce:transition-none motion-reduce:transform-none",
                             )}
                         />
                     </button>
 
                     <button
                         type="button"
-                        aria-label="Jump to comments"
-                        title="Jump to comments"
-                        data-jump-comments
-                        class="group inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md px-2 text-neutral-500 transition-colors duration-100 hover:text-journal-accent-text motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-journal-accent"
+                        aria-label="Bookmark article"
+                        aria-pressed="false"
+                        title="Bookmark article"
+                        data-bookmark
+                        data-bookmark-title={title}
+                        data-bookmark-description={description}
+                        data-bookmark-tag={tagline}
+                        class="group inline-flex size-8 cursor-pointer items-center justify-center rounded-md p-2 text-neutral-500 transition-colors duration-100 hover:text-journal-accent-text motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-journal-accent"
                     >
                         <Fragment
                             set:html={icon(
-                                "message-circle",
-                                "size-4 transition-transform duration-300 group-hover:rotate-12 motion-reduce:transition-none motion-reduce:transform-none",
+                                "bookmark",
+                                "size-4 transition-transform duration-300 group-active:-translate-y-0.5 motion-reduce:transition-none motion-reduce:transform-none",
                             )}
-                        />
-                        <span
-                            data-comment-count
-                            hidden
-                            class="text-xs font-medium"
                         />
                     </button>
 
@@ -147,7 +148,7 @@ const shareIconHtml = icon(
                                         <Fragment
                                             set:html={icon(
                                                 "globe-code",
-                                                "size-4 transition-transform duration-300 group-hover:rotate-12 motion-reduce:transition-none motion-reduce:transform-none",
+                                                "size-4 transition-transform duration-300 group-active:-translate-y-0.5 motion-reduce:transition-none motion-reduce:transform-none",
                                             )}
                                         />
                                         <span class="hidden sm:inline">
@@ -183,7 +184,7 @@ const shareIconHtml = icon(
                                         <Fragment
                                             set:html={brandIcon(
                                                 "github",
-                                                "size-4 transition-transform duration-300 group-hover:rotate-12 motion-reduce:transition-none motion-reduce:transform-none",
+                                                "size-4 transition-transform duration-300 group-active:-translate-y-0.5 motion-reduce:transition-none motion-reduce:transform-none",
                                             )}
                                         />
                                         <span class="hidden sm:inline">
@@ -220,7 +221,7 @@ const shareIconHtml = icon(
                                     <Fragment
                                         set:html={icon(
                                             "globe",
-                                            "size-4 transition-transform duration-300 group-hover:rotate-12 motion-reduce:transition-none motion-reduce:transform-none",
+                                            "size-4 transition-transform duration-300 group-active:-translate-y-0.5 motion-reduce:transition-none motion-reduce:transform-none",
                                         )}
                                     />
                                     <span class="hidden sm:inline">

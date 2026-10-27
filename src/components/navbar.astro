@@ -60,7 +60,18 @@ const isActive = (href: string) => {
             ))}
         </nav>
 
-        <div class="flex flex-1 items-center justify-end gap-3 md:flex-none">
+        <div class="flex flex-1 items-center justify-end gap-2 md:flex-none">
+            <a
+                href="/bookmarks"
+                aria-label="Bookmarks"
+                title="Bookmarks"
+                class="mr-2 inline-flex cursor-pointer rounded-full p-2 text-journal-light-muted transition-colors duration-100 hover:bg-journal-accent/10 hover:text-journal-accent-text dark:text-journal-dark-muted dark:hover:bg-journal-accent/20"
+            >
+                <Fragment set:html={icon("bookmark")} />
+            </a>
+
+            <span aria-hidden="true" class="h-5 w-px bg-smooth-border"></span>
+
             <button
                 id="theme-toggle"
                 type="button"

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>rzkytmgr</title>
+    <link>https://example.com</link>
+    <description>A personal portfolio featuring software projects, technical experiments, and engineering write-ups.</description>
+    <atom:link href="https://example.com/rss.xml" rel="self" type="application/rss+xml" />
+        <item>
+      <title>Migrating a Monolith to a Modular Architecture Without Rewriting Everything</title>
+      <link>https://example.com/blog/migrating-a-monolith-to-a-modular-architecture-without-rewriting-everything</link>
+      <guid>https://example.com/blog/migrating-a-monolith-to-a-modular-architecture-without-rewriting-everything</guid>
+      <description>A pragmatic path from tangled monolith to modular monolith — identifying seams, enforcing boundaries with tests, extracting modules one at a time, and avoiding the rewrite trap that kills so many migrations.</description>
+      <pubDate>Fri, 30 Oct 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Observability for Small Teams</title>
+      <link>https://example.com/blog/observability-for-small-teams</link>
+      <guid>https://example.com/blog/observability-for-small-teams</guid>
+      <description>How a small team can get real observability without building an observability platform — starting with structured logs and traces, adding the metrics that matter, and designing dashboards around questions instead of charts.</description>
+      <pubDate>Sat, 22 Aug 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>From Local Development to Production: Creating a Deployment Process Engineers Can Trust</title>
+      <link>https://example.com/blog/from-local-development-to-production-creating-a-deployment-process-engineers-can-trust</link>
+      <guid>https://example.com/blog/from-local-development-to-production-creating-a-deployment-process-engineers-can-trust</guid>
+      <description>A detailed overview of building predictable deployment workflows with automated testing, reproducible builds, environment consistency, safe rollouts, monitoring, and reliable rollback strategies.</description>
+      <pubDate>Tue, 28 Apr 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Building Reliable Background Job Systems Without Creating Unnecessary Operational Complexity</title>
+      <link>https://example.com/blog/building-reliable-background-job-systems-without-creating-unnecessary-operational-complexity</link>
+      <guid>https://example.com/blog/building-reliable-background-job-systems-without-creating-unnecessary-operational-complexity</guid>
+      <description>A guide to designing dependable background job systems by examining retries, idempotency, scheduling, failure handling, observability, and the trade-offs behind asynchronous processing.</description>
+      <pubDate>Tue, 14 Apr 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Why Distributed Systems Become Difficult Even When Every Individual Service Looks Simple</title>
+      <link>https://example.com/blog/why-distributed-systems-become-difficult-even-when-every-individual-service-looks-simple</link>
+      <guid>https://example.com/blog/why-distributed-systems-become-difficult-even-when-every-individual-service-looks-simple</guid>
+      <description>An examination of how network failures, partial availability, data consistency, coordination, and operational complexity make distributed systems fundamentally different from single-process applications.</description>
+      <pubDate>Tue, 10 Feb 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Writing Documentation That Engineers Actually Read</title>
+      <link>https://example.com/blog/writing-documentation-that-engineers-actually-read</link>
+      <guid>https://example.com/blog/writing-documentation-that-engineers-actually-read</guid>
+      <description>Why most internal documentation rots, and how to write docs that survive — documenting decisions, keeping examples runnable, writing for the reader&apos;s goal, and making documentation part of the review process.</description>
+      <pubDate>Fri, 07 Nov 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Measuring Performance Before You Optimize</title>
+      <link>https://example.com/blog/measuring-performance-before-you-optimize</link>
+      <guid>https://example.com/blog/measuring-performance-before-you-optimize</guid>
+      <description>A practical guide to performance work that starts with measurements, not guesses — defining baselines, picking the right profiler for the job, avoiding the classic benchmark traps, and knowing when to stop.</description>
+      <pubDate>Mon, 18 Aug 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Understanding Database Indexes Through the Lens of Data Structures and Query Planning</title>
+      <link>https://example.com/blog/understanding-database-indexes-through-the-lens-of-data-structures-and-query-planning</link>
+      <guid>https://example.com/blog/understanding-database-indexes-through-the-lens-of-data-structures-and-query-planning</guid>
+      <description>A practical story of a multi-table join that slowed down as data grew, how EXPLAIN revealed the missing index, and the query-planning principles worth carrying forward.</description>
+      <pubDate>Wed, 05 Mar 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Designing Software Boundaries That Make Large Applications Easier to Understand</title>
+      <link>https://example.com/blog/designing-software-boundaries-that-make-large-applications-easier-to-understand</link>
+      <guid>https://example.com/blog/designing-software-boundaries-that-make-large-applications-easier-to-understand</guid>
+      <description>An exploration of how clear module boundaries can reduce coupling, improve maintainability, and help engineering teams evolve large applications without losing architectural clarity.</description>
+      <pubDate>Wed, 12 Feb 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Building Systems That Remain Simple as Product Requirements Continue to Grow</title>
+      <link>https://example.com/blog/building-systems-that-remain-simple-as-product-requirements-continue-to-grow</link>
+      <guid>https://example.com/blog/building-systems-that-remain-simple-as-product-requirements-continue-to-grow</guid>
+      <description>Why systems drift toward complexity as requirements accumulate, and the working rules — preserving boundaries, measuring before optimizing, and refusing premature complexity — that keep a growing codebase changeable.</description>
+      <pubDate>Wed, 15 Jan 2025 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Designing APIs That Evolve Without Breaking Their Consumers</title>
+      <link>https://example.com/blog/designing-apis-that-evolve-without-breaking-their-consumers</link>
+      <guid>https://example.com/blog/designing-apis-that-evolve-without-breaking-their-consumers</guid>
+      <description>Practical strategies for evolving public APIs safely — additive changes, compatibility rules, versioning trade-offs, deprecation policies, and the discipline required to keep consumers moving forward without breaking them.</description>
+      <pubDate>Tue, 10 Dec 2024 00:00:00 GMT</pubDate>
+    </item>
+  </channel>
+</rss>

@@ -20,11 +20,11 @@
         "prepare": "husky"
     },
     "dependencies": {
-        "@astrojs/markdown-remark": "7.3.1",
-        "@astrojs/mdx": "8.0.2",
+        "@astrojs/markdown-remark": "7.3.4",
+        "@astrojs/mdx": "8.1.1",
         "@astrojs/sitemap": "3.7.4",
-        "@fontsource-variable/source-serif-4": "^5.3.0",
-        "astro": "^7.3.5",
+        "@fontsource-variable/source-serif-4": "^5.3.1",
+        "astro": "^7.4.2",
         "github-slugger": "^2.0.0",
         "gray-matter": "^4.0.3",
         "rehype-pretty-code": "^0.14.5",

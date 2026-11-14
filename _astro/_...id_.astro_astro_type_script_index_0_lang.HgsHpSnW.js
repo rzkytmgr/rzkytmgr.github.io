@@ -1,0 +1,1 @@
+import"./article.BONYpn2U.js";

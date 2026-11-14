@@ -1,7 +1,8 @@
 ---
 import { getCollection } from "astro:content";
 import MainLayout from "../../layouts/main-layout.astro";
-import ShowcaseCard from "../../components/showcase-card.astro";
+import ShowcaseIndexRow from "../../components/showcase-index-row.astro";
+import ShowcasePreview from "../../components/showcase-preview.astro";
 import { icon } from "../../components/icons";
 import { config } from "../../config";
 
@@ -96,11 +97,20 @@ const pillActiveClass = "text-zinc-950 dark:text-zinc-50";
                                 <input
                                     type="search"
                                     data-showcase-search
+                                    data-search-shortcut
                                     placeholder="search projects..."
                                     aria-label="Search projects"
                                     autocomplete="off"
                                     class="w-full min-w-0 bg-transparent text-xs word-spacing-wide font-medium text-zinc-950 outline-none placeholder:text-neutral-500 [&::-webkit-search-cancel-button]:hidden dark:text-zinc-50"
                                 />
+
+                                <kbd
+                                    aria-hidden="true"
+                                    data-search-hint
+                                    class="mr-1 shrink-0 rounded border border-smooth-border px-1.5 font-sans text-[0.625rem] leading-4 text-neutral-500"
+                                >
+                                    /
+                                </kbd>
 
                                 <button
                                     type="button"
@@ -117,24 +127,25 @@ const pillActiveClass = "text-zinc-950 dark:text-zinc-50";
                 </div>
             </div>
 
-            <ul
-                class="mt-8 grid list-none grid-cols-1 gap-6 p-0 md:grid-cols-2 md:gap-8"
-                data-showcase-rows
-            >
-                {items.map((entry) => (
-                    <li
-                        class="flex"
-                        data-showcase-row
-                        data-project-id={entry.data.id}
-                        data-filter-tag={entry.data.category.toLowerCase()}
-                        data-search={`${entry.data.title} ${entry.data.description} ${entry.data.category}`.toLowerCase()}
-                    >
-                        <div class="w-full">
-                            <ShowcaseCard showcase={entry.data} />
-                        </div>
-                    </li>
-                ))}
-            </ul>
+            <div class="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
+                <ol
+                    class="list-none border-t border-smooth-border p-0"
+                    data-showcase-rows
+                >
+                    {items.map((entry, index) => (
+                        <ShowcaseIndexRow showcase={entry.data} index={index} />
+                    ))}
+                </ol>
+
+                <aside
+                    aria-label="Project preview"
+                    class="hidden lg:sticky lg:top-36 lg:block lg:self-start"
+                >
+                    {items.map((entry) => (
+                        <ShowcasePreview showcase={entry.data} />
+                    ))}
+                </aside>
+            </div>
 
             <p data-empty-message hidden class="text-sm text-neutral-500">
                 No projects match your search or filter.

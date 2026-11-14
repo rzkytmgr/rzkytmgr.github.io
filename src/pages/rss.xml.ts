@@ -60,7 +60,7 @@ export const GET: APIRoute = async () => {
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>${escapeXml(config.title)}</title>
-    <link>${baseUrl}</link>
+    <link>${baseUrl}/</link>
     <description>${escapeXml(config.description)}</description>
     <atom:link href="${baseUrl}/rss.xml" rel="self" type="application/rss+xml" />
     ${items
@@ -69,8 +69,8 @@ export const GET: APIRoute = async () => {
 
             return `    <item>
       <title>${escapeXml(post.data.title)}</title>
-      <link>${baseUrl}/blog/${post.data.slug}</link>
-      <guid>${baseUrl}/blog/${post.data.slug}</guid>
+      <link>${baseUrl}/blog/${post.data.slug}/</link>
+      <guid>${baseUrl}/blog/${post.data.slug}/</guid>
       <description>${escapeXml(post.data.description)}</description>${pubDate ? `\n      <pubDate>${pubDate}</pubDate>` : ""}
     </item>`;
         })

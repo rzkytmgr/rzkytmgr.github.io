@@ -1,0 +1,29 @@
+---
+interface Props {
+    class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div aria-hidden="true" class:list={["footer-mascot", className]}>
+    <div class="footer-mascot__whale"></div>
+</div>
+
+<style>
+    .footer-mascot {
+        container-type: size;
+    }
+
+    .footer-mascot__whale {
+        --scale: min(100cqw / 1348, 100cqh / 484);
+
+        position: absolute;
+        right: calc(var(--scale) * -64);
+        bottom: calc(var(--scale) * -16);
+        width: calc(var(--scale) * 1472);
+        aspect-ratio: 1472 / 514;
+        background-color: var(--bitmap-glyph);
+        mask: url("/assets/whale-bitmap.webp") center / contain no-repeat;
+    }
+</style>

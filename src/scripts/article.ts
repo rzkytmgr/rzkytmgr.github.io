@@ -25,9 +25,7 @@ function readClaps(): string[] {
 function writeClaps(hrefs: string[]) {
     try {
         localStorage.setItem(CLAPS_STORAGE_KEY, JSON.stringify(hrefs));
-    } catch {
-        // Storage may be unavailable (private mode, quota) — best-effort only.
-    }
+    } catch {}
 }
 
 function setupArticleClap() {
@@ -107,10 +105,7 @@ function readBookmarks(): BookmarkEntry[] {
 function writeBookmarks(entries: BookmarkEntry[]) {
     try {
         localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(entries));
-    } catch {
-        // Storage may be unavailable (private mode, quota) — bookmarking is
-        // best-effort, so fail silently.
-    }
+    } catch {}
 }
 
 function getBookmarkActions() {

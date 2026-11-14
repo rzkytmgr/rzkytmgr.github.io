@@ -13,6 +13,7 @@ if (root) {
     const searchInput =
         root.querySelector<HTMLInputElement>("[data-lab-search]");
     const clearButton = root.querySelector<HTMLElement>("[data-clear-search]");
+    const searchHint = root.querySelector<HTMLElement>("[data-search-hint]");
     const emptyMessage = root.querySelector<HTMLElement>(
         "[data-empty-message]",
     );
@@ -91,9 +92,14 @@ if (root) {
         });
     });
 
+    function syncSearchControls() {
+        clearButton?.toggleAttribute("hidden", query.length === 0);
+        searchHint?.toggleAttribute("hidden", query.length > 0);
+    }
+
     searchInput?.addEventListener("input", () => {
         query = searchInput.value;
-        clearButton?.toggleAttribute("hidden", query.length === 0);
+        syncSearchControls();
         update();
     });
 
@@ -101,7 +107,7 @@ if (root) {
         if (event.key === "Escape") {
             searchInput.value = "";
             query = "";
-            clearButton?.setAttribute("hidden", "");
+            syncSearchControls();
             update();
         }
     });
@@ -109,7 +115,7 @@ if (root) {
     clearButton?.addEventListener("click", () => {
         searchInput!.value = "";
         query = "";
-        clearButton.setAttribute("hidden", "");
+        syncSearchControls();
         searchInput?.focus();
         update();
     });

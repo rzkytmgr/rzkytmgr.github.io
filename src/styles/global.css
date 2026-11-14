@@ -1,5 +1,3 @@
-/* Mona Sans variable font (official build from github/mona-sans, includes
-   stylistic sets ss01-ss10; the Fontsource build has them stripped). */
 @font-face {
     font-family: "Mona Sans Variable";
     src: url("/fonts/MonaSansVF.woff2") format("woff2-variations");
@@ -25,6 +23,7 @@
     --smooth-border: #e2e8f0;
     --journal-accent: #f38020;
     --journal-accent-text: #d96e14;
+    --bitmap-glyph: rgb(9 9 11 / 0.85);
     --warning-text: #8a6200;
     --warning: #9a6700;
     --warning-bg: #f5f1e8;
@@ -69,6 +68,7 @@
     --smooth-border: #33373b;
     --journal-accent: #f38020;
     --journal-accent-text: #f38020;
+    --bitmap-glyph: rgb(250 250 250 / 0.7);
     --warning-text: #e3b341;
     --warning: #d29922;
     --warning-bg: #353023;
@@ -148,7 +148,18 @@ html {
     word-spacing: 0.15em;
 }
 
-/* Article bookmark button (filled + accented when saved) */
+.bitmap-glow {
+    background-image: var(
+        --bitmap-glow,
+        radial-gradient(
+            closest-side,
+            color-mix(in oklab, var(--journal-accent) 35%, transparent),
+            transparent
+        )
+    );
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
 
 [data-article-actions] [data-bookmark][aria-pressed="true"] {
     color: var(--journal-accent-text);
@@ -161,8 +172,6 @@ html {
 [data-article-actions] [data-bookmark][aria-pressed="false"] svg {
     fill: none;
 }
-
-/* Article clap button (accented once clapped) */
 
 [data-article-actions] [data-clap][data-clapped="true"] {
     color: var(--journal-accent-text);
@@ -180,7 +189,6 @@ html[data-sidebar-open] #app {
     transform: translateX(288px);
 }
 
-/* Mobile sidebar default state is off-screen; shown via data-sidebar-open. */
 #sidebar {
     transform: translateX(-100%);
 }

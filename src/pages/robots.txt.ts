@@ -4,7 +4,7 @@ import { config } from "../config";
 export const GET: APIRoute = async () => {
     const baseUrl = config.url.replace(/\/$/, "");
 
-    const robots = `User-agent: *\nAllow: /\n\nSitemap: ${baseUrl}/sitemap.xml\n`;
+    const robots = `User-agent: *\nAllow: /\n\nSitemap: ${baseUrl}/sitemap-index.xml\n`;
 
     return new Response(robots, {
         headers: {

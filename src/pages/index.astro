@@ -22,12 +22,12 @@ const byNewest = (
 ) => Date.parse(b.data.date) - Date.parse(a.data.date);
 
 const writeupItems = writeups.sort(byNewest).slice(0, 6);
-const showcaseItems = showcases.sort(byNewest).slice(0, 2);
+const showcaseItems = showcases.sort(byNewest).slice(0, 3);
 const laboratoryItems = laboratory.sort(byNewest).slice(0, 4);
 const explorationItems = exploration.sort(byNewest).slice(0, 4);
 ---
 
-<MainLayout title="Home" description={config.ui.home.hero.subheading}>
+<MainLayout description={config.ui.home.hero.subheading}>
     <main
         id="main-content"
         class="mx-auto w-full max-w-6xl px-5 py-20 md:py-32 sm:px-6"
@@ -41,7 +41,7 @@ const explorationItems = exploration.sort(byNewest).slice(0, 4);
         <HomeSection
             id="writeups"
             title={config.ui.home.sections.writeups}
-            linkHref="/blog"
+            linkHref="/blog/"
             class="mb-8"
         >
             <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -56,7 +56,7 @@ const explorationItems = exploration.sort(byNewest).slice(0, 4);
         <HomeSection
             id="laboratory"
             title={config.ui.home.sections.laboratory}
-            linkHref="/lab"
+            linkHref="/lab/"
             linkLabel="View archived"
         >
             <div class="mt-8 border-t border-smooth-border">
@@ -69,10 +69,10 @@ const explorationItems = exploration.sort(byNewest).slice(0, 4);
         <HomeSection
             id="showcase"
             title={config.ui.home.sections.showcase}
-            linkHref="/showcase"
+            linkHref="/showcase/"
             class="mb-8"
         >
-            <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
+            <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {showcaseItems.map((entry) => (
                     <div>
                         <ShowcaseCard showcase={entry.data} />

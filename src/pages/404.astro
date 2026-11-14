@@ -3,7 +3,11 @@ import MainLayout from "../layouts/main-layout.astro";
 import { icon } from "../components/icons";
 ---
 
-<MainLayout title="404 — Page not found">
+<MainLayout
+    title="Page not found"
+    description="The page you are looking for might have been moved, renamed, or does not exist."
+    noindex
+>
     <main
         id="main-content"
         class="m-auto w-full max-w-6xl px-5 py-20 sm:px-6 md:py-32"

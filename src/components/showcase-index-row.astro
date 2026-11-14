@@ -1,0 +1,71 @@
+---
+import { parsePublishDate } from "../utils/date";
+
+interface Props {
+    showcase: {
+        id: string;
+        slug: string;
+        title: string;
+        description: string;
+        category: string;
+        tech_stack: string[];
+        date: string;
+        is_archive: boolean;
+    };
+    index: number;
+}
+
+const { showcase: data, index } = Astro.props;
+const published = parsePublishDate(data.date);
+const monthYear = published.year
+    ? `${published.month} ${published.year}`
+    : published.full;
+---
+
+<li
+    class="border-b border-smooth-border"
+    data-showcase-row
+    data-project-id={data.id}
+    data-filter-tag={data.category.toLowerCase()}
+    data-search={`${data.title} ${data.description} ${data.category} ${data.tech_stack.join(" ")}`.toLowerCase()}
+>
+    <a
+        href={`/showcase/${data.slug}/`}
+        class="grid grid-cols-[2.25rem_minmax(0,1fr)] items-baseline gap-x-5 gap-y-1 px-1 py-4.5 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-journal-accent md:grid-cols-[2.25rem_4.75rem_minmax(0,1fr)_auto]"
+    >
+        <span
+            aria-hidden="true"
+            data-row-index
+            class="font-mono text-xs font-medium text-neutral-400 transition-colors duration-100"
+        >
+            {String(index + 1).padStart(2, "0")}
+        </span>
+
+        <span class="hidden text-xs word-spacing-wide font-medium whitespace-nowrap text-neutral-500 md:block">
+            {monthYear}
+        </span>
+
+        <span class="min-w-0">
+            <span
+                data-row-title
+                class="block text-[1.0625rem] font-semibold tracking-tight text-neutral-500 transition-colors duration-100"
+            >
+                {data.title}
+            </span>
+            <span class="mt-1 block truncate text-[0.8125rem] leading-normal text-neutral-500">
+                {data.description}
+            </span>
+        </span>
+
+        <span class="col-start-2 mt-1 flex items-center gap-2.5 whitespace-nowrap word-spacing-wide md:col-start-auto md:mt-0 md:justify-end">
+            {data.is_archive && (
+                <span class="rounded-full border border-warning-border bg-warning-bg px-2 py-0.5 text-[0.6875rem] font-medium text-warning-text">
+                    unmaintained
+                </span>
+            )}
+            <span class="text-xs font-medium text-journal-accent-text">
+                {data.category}
+            </span>
+        </span>
+    </a>
+</li>

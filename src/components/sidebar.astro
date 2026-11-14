@@ -1,5 +1,6 @@
 ---
 import NavbarItem from "./navbar-item.astro";
+import { isNavActive } from "../navigation";
 
 interface Props {
     items: { href: string; label: string }[];
@@ -8,17 +9,7 @@ interface Props {
 const { items } = Astro.props;
 const { pathname } = Astro.url;
 
-const isActive = (href: string) => {
-    if (href === "/") {
-        return pathname === "/";
-    }
-
-    if (href === "/blog") {
-        return pathname === "/blog" || pathname.startsWith("/blog/");
-    }
-
-    return pathname === href || pathname.startsWith(`${href}/`);
-};
+const isActive = (href: string) => isNavActive(href, pathname);
 ---
 
 <aside

@@ -1,6 +1,7 @@
 ---
 import { icon } from "./icons";
 import NavbarItem from "./navbar-item.astro";
+import { isNavActive } from "../navigation";
 
 interface Props {
     title: string;
@@ -10,17 +11,7 @@ interface Props {
 const { title, items } = Astro.props;
 const { pathname } = Astro.url;
 
-const isActive = (href: string) => {
-    if (href === "/") {
-        return pathname === "/";
-    }
-
-    if (href === "/blog") {
-        return pathname === "/blog" || pathname.startsWith("/blog/");
-    }
-
-    return pathname === href || pathname.startsWith(`${href}/`);
-};
+const isActive = (href: string) => isNavActive(href, pathname);
 ---
 
 <header class="group/nav sticky top-0 z-50 w-full bg-background">
@@ -62,7 +53,7 @@ const isActive = (href: string) => {
 
         <div class="flex flex-1 items-center justify-end gap-2 md:flex-none">
             <a
-                href="/bookmarks"
+                href="/bookmarks/"
                 aria-label="Bookmarks"
                 title="Bookmarks"
                 class="mr-2 inline-flex cursor-pointer rounded-full p-2 text-journal-light-muted transition-colors duration-100 hover:bg-journal-accent/10 hover:text-journal-accent-text dark:text-journal-dark-muted dark:hover:bg-journal-accent/20"

@@ -31,7 +31,7 @@ const published = parsePublishDate(data.date);
         aria-hidden="true"
         class="pointer-events-none absolute inset-0 z-0 overflow-hidden"
     >
-        <div class="absolute -top-12 -right-12 size-40 rounded-full opacity-0 transition-opacity duration-150 group-hover:opacity-50 motion-reduce:transition-none blur-2xl bg-[radial-gradient(closest-side,color-mix(in_oklab,var(--journal-accent)_30%,transparent),transparent)]"></div>
+        <div class="bitmap-glow absolute -top-12 -right-12 size-40 opacity-0 transition-opacity duration-150 group-hover:opacity-40 motion-reduce:transition-none dark:group-hover:opacity-32"></div>
     </div>
 
     <div class="relative z-10 flex items-baseline gap-4 md:grid md:grid-cols-[2.5rem_7.5rem_minmax(0,1fr)_auto] md:gap-x-6">
@@ -49,7 +49,7 @@ const published = parsePublishDate(data.date);
         <div class="min-w-0 flex-1">
             <h3 class="line-clamp-1 font-semibold md:text-lg">
                 <a
-                    href={`/lab/${data.slug}`}
+                    href={`/lab/${data.slug}/`}
                     class="after:absolute after:inset-0 transition-colors duration-100 hover:text-journal-accent-text focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-journal-accent"
                 >
                     {data.title}

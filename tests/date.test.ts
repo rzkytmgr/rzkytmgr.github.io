@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePublishDate } from "@/src/utils/date";
+import { parsePublishDate, toIsoDate } from "@/src/utils/date";
 
 describe("parsePublishDate", () => {
     it("splits a publish date into month, day and year", () => {
@@ -36,5 +36,19 @@ describe("parsePublishDate", () => {
             label: "someday",
             full: "someday",
         });
+    });
+});
+
+describe("toIsoDate", () => {
+    it("converts publish dates to ISO 8601 calendar dates", () => {
+        expect(toIsoDate("Oct 30, 2026")).toBe("2026-10-30");
+        expect(toIsoDate("Mar 7, 2025")).toBe("2025-03-07");
+        expect(toIsoDate("December 1, 2024")).toBe("2024-12-01");
+    });
+
+    it("returns null for dates it cannot read", () => {
+        expect(toIsoDate("soon")).toBeNull();
+        expect(toIsoDate("Foo 10, 2026")).toBeNull();
+        expect(toIsoDate("Oct 40, 2026")).toBeNull();
     });
 });

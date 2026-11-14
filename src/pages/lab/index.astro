@@ -96,11 +96,20 @@ const pillActiveClass = "text-zinc-950 dark:text-zinc-50";
                                 <input
                                     type="search"
                                     data-lab-search
+                                    data-search-shortcut
                                     placeholder="search experiments..."
                                     aria-label="Search experiments"
                                     autocomplete="off"
                                     class="w-full min-w-0 bg-transparent text-xs word-spacing-wide font-medium text-zinc-950 outline-none placeholder:text-neutral-500 [&::-webkit-search-cancel-button]:hidden dark:text-zinc-50"
                                 />
+
+                                <kbd
+                                    aria-hidden="true"
+                                    data-search-hint
+                                    class="mr-1 shrink-0 rounded border border-smooth-border px-1.5 font-sans text-[0.625rem] leading-4 text-neutral-500"
+                                >
+                                    /
+                                </kbd>
 
                                 <button
                                     type="button"

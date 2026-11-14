@@ -16,15 +16,30 @@ import {
     rehypeExternalLinks,
     rehypeWrapTables,
 } from "./src/markdown/rehype-plugins";
+import { contentLastModified } from "./src/seo/content-dates";
 
 const cssVariablesTheme = createCssVariablesTheme({
     name: "css-variables",
     variablePrefix: "--shiki-",
 }) as RehypePrettyCodeOptions["theme"];
 
+const NOINDEX_PATHS = ["/bookmarks/"];
+const lastModified = contentLastModified();
+
 export default defineConfig({
     site: config.url,
-    integrations: [mdx(), sitemap()],
+    trailingSlash: "always",
+    integrations: [
+        mdx(),
+        sitemap({
+            filter: (page) => !NOINDEX_PATHS.includes(new URL(page).pathname),
+            serialize: (item) => {
+                const lastmod = lastModified.get(new URL(item.url).pathname);
+
+                return lastmod ? { ...item, lastmod } : item;
+            },
+        }),
+    ],
     vite: {
         plugins: [tailwindcss()],
     },

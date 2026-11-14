@@ -38,9 +38,7 @@ function readBookmarks(): BookmarkEntry[] {
 function writeBookmarks(entries: BookmarkEntry[]) {
     try {
         localStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(entries));
-    } catch {
-        // Storage may be unavailable (private mode, quota) — best-effort only.
-    }
+    } catch {}
 }
 
 const list = document.querySelector<HTMLElement>("[data-bookmark-list]");

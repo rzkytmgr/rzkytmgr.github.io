@@ -29,20 +29,29 @@ const index = all.findIndex((item) => item.data.slug === data.slug);
 const previous =
     index > 0
         ? {
-              href: `/lab/${all[index - 1].data.slug}`,
+              href: `/lab/${all[index - 1].data.slug}/`,
               title: all[index - 1].data.title,
           }
         : null;
 const next =
     index >= 0 && index < all.length - 1
         ? {
-              href: `/lab/${all[index + 1].data.slug}`,
+              href: `/lab/${all[index + 1].data.slug}/`,
               title: all[index + 1].data.title,
           }
         : null;
 ---
 
-<MainLayout title={`${data.title} - rzkytmgr`} description={data.description}>
+<MainLayout
+    title={data.title}
+    description={data.description}
+    article={{
+        kind: "Article",
+        date: data.date,
+        section: "Laboratory",
+        tags: [data.category, ...data.stack],
+    }}
+>
     <main
         id="main-content"
         class="m-auto w-full max-w-7xl px-6 pt-6 pb-20 md:pt-8 md:pb-32"

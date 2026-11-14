@@ -1,0 +1,25 @@
+---
+import ShowcaseCard from "./showcase-card.astro";
+
+interface Props {
+    showcase: {
+        id: string;
+        slug: string;
+        title: string;
+        description: string;
+        category: string;
+        thumbnail: string;
+        is_archive: boolean;
+        link?: {
+            repository?: string;
+            preview?: string;
+        };
+    };
+}
+
+const { showcase: data } = Astro.props;
+---
+
+<div data-preview-panel={data.id} hidden>
+    <ShowcaseCard showcase={data} headingLevel={2} />
+</div>

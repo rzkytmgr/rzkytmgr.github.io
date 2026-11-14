@@ -1,3 +1,6 @@
+import { createGlowTexture } from "./bitmap";
+import { bindSearchShortcut } from "./search-shortcut";
+
 const LIGHT_THEME = "clean-light";
 const DARK_THEME = "charcoal";
 const SITE_THEMES = [LIGHT_THEME, DARK_THEME] as const;
@@ -25,6 +28,22 @@ function getInitialTheme(): string {
 }
 
 applyTheme(getInitialTheme());
+bindSearchShortcut();
+
+if (document.querySelector(".bitmap-glow")) {
+    const accent =
+        getComputedStyle(document.documentElement)
+            .getPropertyValue("--journal-accent")
+            .trim() || "#f38020";
+    const glow = createGlowTexture({ size: 2, color: accent });
+
+    if (glow) {
+        document.documentElement.style.setProperty(
+            "--bitmap-glow",
+            `url("${glow}")`,
+        );
+    }
+}
 
 document.getElementById("theme-toggle")?.addEventListener("click", () => {
     const current =

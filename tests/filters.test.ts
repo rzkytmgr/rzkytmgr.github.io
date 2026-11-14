@@ -1,14 +1,8 @@
-// Runtime regression tests for the vanilla-TS listing filters
-// (/blog, /showcase, /lab). These load the BUILT pages from dist/ and
-// execute the bundled inline module scripts inside happy-dom, then
-// simulate user interaction (pill clicks, search input, hover).
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { existsSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { Window } from "happy-dom";
-// happy-dom's DOM types differ from lib.dom's, so shadow the globals with
-// the happy-dom ones for querySelector generics below.
 import type { HTMLElement, HTMLInputElement } from "happy-dom";
 
 const distDir = path.resolve(__dirname, "..", "dist");
@@ -18,9 +12,6 @@ function loadPage(pagePath: string) {
     const window = new Window({ url: `https://example.com/${pagePath}` });
     window.document.write(html);
 
-    // Astro bundles page scripts as inline <script type="module">. happy-dom
-    // does not execute module scripts on document.write, so evaluate them in
-    // document order — same as a real browser would after parsing.
     const scripts = Array.from(
         window.document.querySelectorAll("script[type='module']"),
     ).map((script) => script.textContent ?? "");
@@ -148,12 +139,10 @@ describe.skipIf(!hasDist)("showcase filter (bundled)", () => {
         );
         expect(rows.length).toBe(4);
 
-        // The preview-panel layout was replaced by the homepage card grid.
         expect(document.querySelectorAll("[data-preview-panel]").length).toBe(
-            0,
+            4,
         );
 
-        // Click the first real category pill rendered on the page.
         const categoryKey = document.querySelector<HTMLElement>(
             "[data-filter-key]:not([data-filter-key='all'])",
         )!.dataset.filterKey!;
@@ -214,6 +203,60 @@ describe.skipIf(!hasDist)("showcase filter (bundled)", () => {
         expect(visibleCount(rows)).toBe(4);
         expect(empty.hasAttribute("hidden")).toBe(true);
     });
+
+    it("previews the hovered row and hides the preview when nothing matches", () => {
+        const window = loadPage("showcase/index.html");
+        const document = window.document;
+
+        const rows = Array.from(
+            document.querySelectorAll<HTMLElement>("[data-showcase-row]"),
+        );
+        const panels = Array.from(
+            document.querySelectorAll<HTMLElement>("[data-preview-panel]"),
+        );
+        const shownPanel = () =>
+            panels.filter((panel) => !panel.hasAttribute("hidden"));
+
+        expect(shownPanel().map((panel) => panel.dataset.previewPanel)).toEqual(
+            [rows[0].dataset.projectId],
+        );
+        expect(
+            rows[0]
+                .querySelector<HTMLElement>("[data-row-title]")!
+                .classList.contains("text-zinc-950"),
+        ).toBe(true);
+
+        rows[2].dispatchEvent(new window.MouseEvent("mouseenter"));
+        expect(shownPanel().map((panel) => panel.dataset.previewPanel)).toEqual(
+            [rows[2].dataset.projectId],
+        );
+        expect(
+            rows[0]
+                .querySelector<HTMLElement>("[data-row-title]")!
+                .classList.contains("text-zinc-950"),
+        ).toBe(false);
+
+        const search = document.querySelector<HTMLInputElement>(
+            "[data-showcase-search]",
+        )!;
+        search.value = "zzz-no-match";
+        search.dispatchEvent(new window.Event("input", { bubbles: true }));
+        expect(shownPanel().length).toBe(0);
+    });
+
+    it("shows a single external link per preview, repository first", () => {
+        const window = loadPage("showcase/index.html");
+        const panels = Array.from(
+            window.document.querySelectorAll<HTMLElement>(
+                "[data-preview-panel]",
+            ),
+        );
+
+        for (const panel of panels) {
+            const external = panel.querySelectorAll("a[target='_blank']");
+            expect(external.length).toBeLessThanOrEqual(1);
+        }
+    });
 });
 
 describe.skipIf(!hasDist)("lab filter (bundled)", () => {
@@ -226,7 +269,6 @@ describe.skipIf(!hasDist)("lab filter (bundled)", () => {
         );
         expect(rows.length).toBe(4);
 
-        // Click the first real category pill rendered on the page.
         const categoryKey = document.querySelector<HTMLElement>(
             "[data-filter-key]:not([data-filter-key='all'])",
         )!.dataset.filterKey!;
@@ -264,5 +306,30 @@ describe.skipIf(!hasDist)("lab filter (bundled)", () => {
                     !(row.dataset.search ?? "").includes(firstTitle),
             ).length,
         ).toBe(0);
+    });
+});
+
+describe.skipIf(!hasDist)("search hint (bundled)", () => {
+    const pages = [
+        ["blog/index.html", "#writeups-search"],
+        ["lab/index.html", "[data-lab-search]"],
+        ["showcase/index.html", "[data-showcase-search]"],
+    ] as const;
+
+    it.each(pages)("hides the / hint while typing in %s", (page, selector) => {
+        const window = loadPage(page);
+        const document = window.document;
+        const search = document.querySelector<HTMLInputElement>(selector)!;
+        const hint = document.querySelector<HTMLElement>("[data-search-hint]")!;
+
+        expect(hint.hasAttribute("hidden")).toBe(false);
+
+        search.value = "x";
+        search.dispatchEvent(new window.Event("input", { bubbles: true }));
+        expect(hint.hasAttribute("hidden")).toBe(true);
+
+        search.value = "";
+        search.dispatchEvent(new window.Event("input", { bubbles: true }));
+        expect(hint.hasAttribute("hidden")).toBe(false);
     });
 });

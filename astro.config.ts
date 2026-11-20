@@ -9,14 +9,14 @@ import rehypePrettyCode, {
 import { createCssVariablesTheme } from "shiki";
 import { defineConfig } from "astro/config";
 
-import { config } from "./src/config";
-import { remarkGithubAlerts } from "./src/markdown/remark-github-alerts";
+import { config } from "./src/lib/config";
+import { remarkGithubAlerts } from "./src/lib/markdown/remark-github-alerts";
 import {
     rehypeCodeBlockLabels,
     rehypeExternalLinks,
     rehypeWrapTables,
-} from "./src/markdown/rehype-plugins";
-import { contentLastModified } from "./src/seo/content-dates";
+} from "./src/lib/markdown/rehype-plugins";
+import { contentLastModified } from "./src/lib/seo/content-dates";
 
 const cssVariablesTheme = createCssVariablesTheme({
     name: "css-variables",

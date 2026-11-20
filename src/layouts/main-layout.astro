@@ -1,20 +1,20 @@
 ---
-import "../styles/global.css";
+import "@/styles/global.css";
 
-import { config } from "../config";
-import { NAV_ITEMS } from "../navigation";
-import { ogImagePath } from "../og/paths";
+import { config } from "@/lib/config";
+import { NAV_ITEMS } from "@/lib/navigation";
+import { metaImagePath } from "@/lib/meta/image-paths";
 import {
     articleStructuredData,
     homeStructuredData,
     serializeStructuredData,
     type ArticleMeta,
-} from "../seo/structured-data";
-import { toIsoDate } from "../utils/date";
-import { truncate } from "../utils/text";
-import Footer from "../components/footer.astro";
-import Navbar from "../components/navbar.astro";
-import Sidebar from "../components/sidebar.astro";
+} from "@/lib/seo/structured-data";
+import { toIsoDate } from "@/lib/utils/date";
+import { truncate } from "@/lib/utils/text";
+import Footer from "@/components/layout/footer.astro";
+import Navbar from "@/components/layout/navbar.astro";
+import Sidebar from "@/components/layout/sidebar.astro";
 
 interface Props {
     title?: string;
@@ -37,7 +37,7 @@ const socialTitle = title ?? documentTitle;
 const metaDescription = truncate(description, 160);
 
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const ogImage = new URL(ogImagePath(Astro.url.pathname), Astro.site);
+const metaImage = new URL(metaImagePath(Astro.url.pathname), Astro.site);
 const published = article ? toIsoDate(article.date) : null;
 
 const structuredData =
@@ -47,7 +47,7 @@ const structuredData =
               title: socialTitle,
               description,
               url: canonical.href,
-              image: ogImage.href,
+              image: metaImage.href,
           })
         : Astro.url.pathname === "/"
           ? homeStructuredData(new URL("/", Astro.site).href)
@@ -85,7 +85,7 @@ const structuredData =
         <meta property="og:title" content={socialTitle} />
         <meta property="og:description" content={metaDescription} />
         <meta property="og:url" content={canonical} />
-        <meta property="og:image" content={ogImage} />
+        <meta property="og:image" content={metaImage} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:image:alt" content={socialTitle} />
@@ -103,7 +103,7 @@ const structuredData =
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={socialTitle} />
         <meta name="twitter:description" content={metaDescription} />
-        <meta name="twitter:image" content={ogImage} />
+        <meta name="twitter:image" content={metaImage} />
         <meta name="twitter:image:alt" content={socialTitle} />
 
         {structuredData.length > 0 && (
@@ -131,7 +131,7 @@ const structuredData =
             })();
         </script>
     </head>
-    <body class="min-h-screen overflow-x-hidden bg-background font-sans text-foreground antialiased transition-colors duration-200 selection:bg-journal-accent/25">
+    <body class="min-h-screen overflow-x-hidden bg-background font-sans text-foreground antialiased transition-colors duration-200 selection:bg-zinc-950 selection:text-white dark:selection:bg-zinc-50 dark:selection:text-zinc-950">
         <a
             href="#main-content"
             class="fixed left-4 top-4 z-[100] -translate-y-20 rounded-md border border-smooth-border bg-surface px-4 py-2 font-mono text-xs text-journal-accent-text shadow-lg transition-transform duration-150 focus-visible:translate-y-0"

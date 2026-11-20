@@ -1,0 +1,129 @@
+const root = document.querySelector<HTMLElement>("[data-list-filter]");
+
+if (root) {
+    const items = Array.from(
+        root.querySelectorAll<HTMLElement>("[data-filter-item]"),
+    );
+    const pills = Array.from(
+        root.querySelectorAll<HTMLButtonElement>("[data-filter-key]"),
+    );
+    const indicator = root.querySelector<HTMLElement>(
+        "[data-filter-indicator]",
+    );
+    const searchInput = root.querySelector<HTMLInputElement>(
+        "[data-filter-search]",
+    );
+    const clearButton = root.querySelector<HTMLElement>("[data-clear-search]");
+    const searchHint = root.querySelector<HTMLElement>("[data-search-hint]");
+    const emptyMessage = root.querySelector<HTMLElement>(
+        "[data-empty-message]",
+    );
+
+    let selected: string | null = null;
+    let query = "";
+
+    const pillActiveClasses = ["text-zinc-950", "dark:text-zinc-50"];
+    const pillIdleClasses = [
+        "text-zinc-700",
+        "hover:text-zinc-950",
+        "dark:text-zinc-300",
+        "dark:hover:text-zinc-50",
+    ];
+
+    function measureIndicator() {
+        if (!indicator) {
+            return;
+        }
+
+        const activeKey = selected ?? "all";
+        const active = pills.find(
+            (pill) => pill.dataset.filterKey === activeKey,
+        );
+
+        if (!active) {
+            indicator.style.opacity = "0";
+            return;
+        }
+
+        indicator.style.opacity = "1";
+        indicator.style.transform = `translateX(${active.offsetLeft}px)`;
+        indicator.style.width = `${active.offsetWidth}px`;
+    }
+
+    function update() {
+        const normalized = query.trim().toLowerCase();
+
+        const visible = items.filter((item) => {
+            const matchesTag = !selected || item.dataset.filterTag === selected;
+            const matchesQuery =
+                !normalized || (item.dataset.search ?? "").includes(normalized);
+
+            return matchesTag && matchesQuery;
+        });
+
+        items.forEach((item) => {
+            item.toggleAttribute("hidden", !visible.includes(item));
+        });
+
+        pills.forEach((pill) => {
+            const active =
+                (pill.dataset.filterKey ?? "all") === (selected ?? "all");
+
+            pill.setAttribute("aria-pressed", String(active));
+            pill.classList.remove(
+                ...(active ? pillIdleClasses : pillActiveClasses),
+            );
+            pill.classList.add(
+                ...(active ? pillActiveClasses : pillIdleClasses),
+            );
+        });
+
+        emptyMessage?.toggleAttribute("hidden", visible.length > 0);
+
+        measureIndicator();
+    }
+
+    pills.forEach((pill) => {
+        pill.addEventListener("click", () => {
+            const key = pill.dataset.filterKey ?? "all";
+
+            selected = key === "all" || key === selected ? null : key;
+            update();
+        });
+    });
+
+    function syncSearchControls() {
+        clearButton?.toggleAttribute("hidden", query.length === 0);
+        searchHint?.toggleAttribute("hidden", query.length > 0);
+    }
+
+    searchInput?.addEventListener("input", () => {
+        query = searchInput.value;
+        syncSearchControls();
+        update();
+    });
+
+    searchInput?.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            searchInput.value = "";
+            query = "";
+            syncSearchControls();
+            update();
+        }
+    });
+
+    clearButton?.addEventListener("click", () => {
+        searchInput!.value = "";
+        query = "";
+        syncSearchControls();
+        searchInput?.focus();
+        update();
+    });
+
+    window.addEventListener("resize", measureIndicator);
+    document.fonts?.ready.then(() => measureIndicator());
+
+    measureIndicator();
+}
+
+export {};

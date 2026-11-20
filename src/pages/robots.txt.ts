@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { config } from "../config";
+import { config } from "@/lib/config";
 
 export const GET: APIRoute = async () => {
     const baseUrl = config.url.replace(/\/$/, "");

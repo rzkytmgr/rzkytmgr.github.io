@@ -1,9 +1,9 @@
 ---
 import { getCollection } from "astro:content";
-import MainLayout from "../../layouts/main-layout.astro";
-import WriteupCard from "../../components/writeup-card.astro";
-import { icon } from "../../components/icons";
-import { config } from "../../config";
+import MainLayout from "@/layouts/main-layout.astro";
+import WriteupCard from "@/components/writeups/writeup-card.astro";
+import { icon } from "@/components/icons";
+import { config } from "@/lib/config";
 
 const writeups = await getCollection("writeups");
 
@@ -33,7 +33,7 @@ const options = [...tagCounts.entries()]
     >
         <h1 class="sr-only">{config.ui.pages.writeups.heading}</h1>
 
-        <div data-writeups-filter class="space-y-8">
+        <div data-list-filter class="space-y-8">
             <div class="sticky top-16 z-40 mx-[calc(50%-50vw)] bg-background/80 py-2 backdrop-blur-md">
                 <div
                     aria-hidden="true"
@@ -85,6 +85,7 @@ const options = [...tagCounts.entries()]
 
                                 <input
                                     id="writeups-search"
+                                    data-filter-search
                                     data-search-shortcut
                                     type="search"
                                     placeholder="search writeups..."
@@ -129,7 +130,8 @@ const options = [...tagCounts.entries()]
                 {items.map((entry) => (
                     <div
                         class="writeup-card"
-                        data-tag={entry.data.tag}
+                        data-filter-item
+                        data-filter-tag={entry.data.tag}
                         data-search={`${entry.data.title} ${entry.data.description}`.toLowerCase()}
                     >
                         <WriteupCard writeup={entry.data} />
@@ -142,6 +144,6 @@ const options = [...tagCounts.entries()]
             </p>
         </div>
 
-        <script src="../../scripts/writeups-filter.ts"></script>
+        <script src="../../scripts/list-filter.ts"></script>
     </main>
 </MainLayout>

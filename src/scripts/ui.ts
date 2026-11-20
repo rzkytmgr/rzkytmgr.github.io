@@ -1,5 +1,6 @@
-import { createGlowTexture } from "./bitmap";
-import { bindSearchShortcut } from "./search-shortcut";
+import { createGlowTexture } from "@/scripts/bitmap";
+import { bindImageProtection } from "@/scripts/protect-images";
+import { bindSearchShortcut } from "@/scripts/search-shortcut";
 
 const LIGHT_THEME = "clean-light";
 const DARK_THEME = "charcoal";
@@ -29,6 +30,7 @@ function getInitialTheme(): string {
 
 applyTheme(getInitialTheme());
 bindSearchShortcut();
+bindImageProtection();
 
 if (document.querySelector(".bitmap-glow")) {
     const accent =

@@ -1,13 +1,13 @@
 ---
 import { getCollection } from "astro:content";
-import MainLayout from "../layouts/main-layout.astro";
-import Hero from "../components/hero.astro";
-import HomeSection from "../components/home-section.astro";
-import WriteupCard from "../components/writeup-card.astro";
-import ExplorationItem from "../components/exploration-item.astro";
-import ShowcaseCard from "../components/showcase-card.astro";
-import LabRowItem from "../components/lab-row-item.astro";
-import { config } from "../config";
+import MainLayout from "@/layouts/main-layout.astro";
+import Hero from "@/components/home/hero.astro";
+import HomeSection from "@/components/home/home-section.astro";
+import WriteupCard from "@/components/writeups/writeup-card.astro";
+import ExplorationItem from "@/components/home/exploration-item.astro";
+import ShowcaseCard from "@/components/showcase/showcase-card.astro";
+import LabRowItem from "@/components/laboratory/lab-row-item.astro";
+import { config } from "@/lib/config";
 
 const [writeups, showcases, laboratory, exploration] = await Promise.all([
     getCollection("writeups"),

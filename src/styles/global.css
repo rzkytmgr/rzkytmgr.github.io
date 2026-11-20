@@ -144,6 +144,16 @@ html {
     font-feature-settings: "ss06";
 }
 
+@layer base {
+    img,
+    canvas {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-user-drag: none;
+        -webkit-touch-callout: none;
+    }
+}
+
 @utility word-spacing-wide {
     word-spacing: 0.15em;
 }

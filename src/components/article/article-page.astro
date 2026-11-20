@@ -1,0 +1,111 @@
+---
+import type { ComponentProps } from "astro/types";
+import { getCollection, render, type CollectionEntry } from "astro:content";
+import MainLayout from "@/layouts/main-layout.astro";
+import ArticleHeader from "@/components/article/article-header.astro";
+import ArticlePager from "@/components/article/article-pager.astro";
+import TableOfContents from "@/components/article/table-of-contents.astro";
+import type { ArticleMeta } from "@/lib/seo/structured-data";
+import { extractHeadings } from "@/lib/utils/markdown";
+
+type ArticleCollection = "writeups" | "laboratory" | "showcase";
+
+type HeaderProps = Omit<
+    ComponentProps<typeof ArticleHeader>,
+    "title" | "date" | "description" | "thumbnail"
+>;
+
+interface Props {
+    entry: CollectionEntry<ArticleCollection>;
+    basePath: string;
+    meta: Omit<ArticleMeta, "published">;
+    header: HeaderProps;
+    isArchive?: boolean;
+    alwaysShowAside?: boolean;
+}
+
+const {
+    entry,
+    basePath,
+    meta,
+    header,
+    isArchive = false,
+    alwaysShowAside = false,
+} = Astro.props;
+const data = entry.data;
+const headings = extractHeadings(entry.body ?? "");
+const { Content } = await render(entry);
+
+const all = (await getCollection(entry.collection)).sort(
+    (a, b) => Date.parse(b.data.date) - Date.parse(a.data.date),
+);
+const index = all.findIndex((item) => item.data.slug === data.slug);
+
+const toPagerItem = (item: (typeof all)[number]) => ({
+    href: `${basePath}${item.data.slug}/`,
+    title: item.data.title,
+});
+
+const previous = index > 0 ? toPagerItem(all[index - 1]) : null;
+const next =
+    index >= 0 && index < all.length - 1 ? toPagerItem(all[index + 1]) : null;
+
+const showAside = alwaysShowAside || headings.length > 0;
+---
+
+<MainLayout
+    title={data.title}
+    description={data.description}
+    article={{ ...meta, date: data.date }}
+>
+    <main
+        id="main-content"
+        class="m-auto w-full max-w-7xl px-6 pt-6 pb-20 md:pt-8 md:pb-32"
+    >
+        <div class="mx-auto grid w-full grid-cols-1 gap-y-12 xl:grid-cols-[minmax(0,1fr)_680px_minmax(0,1fr)] xl:gap-x-10">
+            <div class="mx-auto w-full max-w-[680px] xl:col-start-2 xl:row-start-1 xl:max-w-none">
+                <ArticleHeader
+                    {...header}
+                    title={data.title}
+                    date={data.date}
+                    description={data.description}
+                    thumbnail={data.thumbnail}
+                />
+            </div>
+
+            <div class="mx-auto w-full max-w-[680px] xl:col-start-2 xl:row-start-2 xl:max-w-none">
+                <div>
+                    <div class="markdown-body font-serif text-base">
+                        <Content />
+                    </div>
+
+                    <ArticlePager previous={previous} next={next} />
+                </div>
+            </div>
+
+            {showAside && (
+                <aside
+                    class:list={[
+                        "hidden xl:col-start-1 xl:row-start-1 xl:row-span-2",
+                        alwaysShowAside ? "xl:flex xl:flex-col" : "xl:block",
+                    ]}
+                >
+                    <div
+                        class:list={[
+                            "xl:sticky xl:flex xl:flex-col",
+                            isArchive
+                                ? "xl:top-28 xl:max-h-[calc(100vh_-_9rem)]"
+                                : "xl:top-24 xl:max-h-[calc(100vh_-_8rem)]",
+                        ]}
+                    >
+                        <div class="xl:flex xl:min-h-0 xl:flex-col">
+                            <TableOfContents headings={headings} />
+                        </div>
+                    </div>
+                </aside>
+            )}
+        </div>
+
+        <script src="../../scripts/article.ts"></script>
+    </main>
+</MainLayout>

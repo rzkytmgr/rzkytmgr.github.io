@@ -1,31 +1,9 @@
-# Dependencies
-node_modules
-.pnp
-.pnp.*
-
-# Build output
-.astro
-out
-build
-dist
-coverage
-
-# Generated / typed files
-*.tsbuildinfo
-.astro/types.d.ts
+# Prettier 3 already respects .gitignore; only list extra paths here.
 
 # Lockfiles
 pnpm-lock.yaml
 package-lock.json
 yarn.lock
-
-# Environment
-.env
-.env.*
-
-# Misc
-.DS_Store
-*.pem
 
 # Static assets that should stay as-is
 public/**/*.svg

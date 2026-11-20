@@ -14,8 +14,7 @@ coverage
 *.tsbuildinfo
 .astro/types.d.ts
 
-# Lockfiles
-pnpm-lock.yaml
+# Lockfiles from other package managers (this project uses pnpm)
 package-lock.json
 yarn.lock
 
@@ -26,7 +25,3 @@ yarn.lock
 # Misc
 .DS_Store
 *.pem
-
-# Static assets that should stay as-is
-public/**/*.svg
-public/favicon.ico

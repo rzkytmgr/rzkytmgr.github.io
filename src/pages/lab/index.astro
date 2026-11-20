@@ -1,9 +1,9 @@
 ---
 import { getCollection } from "astro:content";
-import MainLayout from "../../layouts/main-layout.astro";
-import { icon } from "../../components/icons";
-import LabRowItem from "../../components/lab-row-item.astro";
-import { config } from "../../config";
+import MainLayout from "@/layouts/main-layout.astro";
+import { icon } from "@/components/icons";
+import LabRowItem from "@/components/laboratory/lab-row-item.astro";
+import { config } from "@/lib/config";
 
 const experiments = await getCollection("laboratory");
 
@@ -35,7 +35,7 @@ const pillActiveClass = "text-zinc-950 dark:text-zinc-50";
     >
         <h1 class="sr-only">{config.ui.pages.laboratory.heading}</h1>
 
-        <div data-lab-filter class="space-y-8">
+        <div data-list-filter class="space-y-8">
             <div class="sticky top-16 z-40 mx-[calc(50%-50vw)] bg-background/80 py-2 backdrop-blur-md">
                 <div
                     aria-hidden="true"
@@ -95,7 +95,7 @@ const pillActiveClass = "text-zinc-950 dark:text-zinc-50";
 
                                 <input
                                     type="search"
-                                    data-lab-search
+                                    data-filter-search
                                     data-search-shortcut
                                     placeholder="search experiments..."
                                     aria-label="Search experiments"
@@ -137,6 +137,6 @@ const pillActiveClass = "text-zinc-950 dark:text-zinc-50";
             </p>
         </div>
 
-        <script src="../../scripts/lab-filter.ts"></script>
+        <script src="../../scripts/list-filter.ts"></script>
     </main>
 </MainLayout>

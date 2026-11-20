@@ -1,10 +1,10 @@
 ---
 import { getCollection } from "astro:content";
-import MainLayout from "../../layouts/main-layout.astro";
-import ShowcaseIndexRow from "../../components/showcase-index-row.astro";
-import ShowcasePreview from "../../components/showcase-preview.astro";
-import { icon } from "../../components/icons";
-import { config } from "../../config";
+import MainLayout from "@/layouts/main-layout.astro";
+import ShowcaseIndexRow from "@/components/showcase/showcase-index-row.astro";
+import ShowcasePreview from "@/components/showcase/showcase-preview.astro";
+import { icon } from "@/components/icons";
+import { config } from "@/lib/config";
 
 const showcases = await getCollection("showcase");
 

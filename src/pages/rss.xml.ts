@@ -1,6 +1,6 @@
 import { getCollection } from "astro:content";
 import type { APIRoute } from "astro";
-import { config } from "../config";
+import { config } from "@/lib/config";
 
 const escapeXml = (value: string) =>
     value

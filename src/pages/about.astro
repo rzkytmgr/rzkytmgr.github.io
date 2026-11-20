@@ -1,7 +1,7 @@
 ---
 import { getCollection, render } from "astro:content";
-import MainLayout from "../layouts/main-layout.astro";
-import { config } from "../config";
+import MainLayout from "@/layouts/main-layout.astro";
+import { config } from "@/lib/config";
 
 const about = config.ui.pages.about;
 const entry = (await getCollection("about"))[0];

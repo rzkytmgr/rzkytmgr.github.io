@@ -1,0 +1,117 @@
+---
+id: WU-03
+title: "Inside a Customer Master Service for B2B Integrations"
+tag: Backend Engineering
+slug: inside-a-customer-master-service-for-b2b-integrations
+description: >-
+    The architecture behind a customer master service used by external B2B
+    partners. How each layer, from API Gateway to the database, is designed
+    around contract stability, data correctness, performance, and failure
+    handling.
+date: "Jun 25, 2023"
+thumbnail: https://picsum.photos/seed/03_inside-a-customer-master-service-for-b2b-integrations/1200/675
+reading_time: 5 min read
+---
+
+A customer master service is the single place where an organization keeps its official customer records. The one described here is built and maintained by the vendor team I work in, for a client whose external B2B partners send and read customer data through it. More than four partner systems are integrated with it, and its database is the **source of truth** for customer information.
+
+This article walks through the architecture around it: what each layer does and which problem it is there to handle.
+
+## Design Constraints
+
+A few properties of the system drive most of the architecture:
+
+- **External consumers.** Partners only see the API contract. They cannot see the internals, and any contract change affects their integrations directly.
+- **Independent release schedules.** Each partner has its own team and timeline, so changes cannot rely on all partners updating at once.
+- **Source of truth.** Data accepted by the service becomes the official customer record, and data returned by it is reused in partner systems.
+- **Personal data.** Customer records require strict control over who can access what.
+- **Repeated reads.** Partners frequently request the same data, which puts constant load on the database.
+
+## Architecture Overview
+
+The service runs on Node.js with Express, stores data in Microsoft SQL Server, uses Redis as a cache, and is deployed on AWS:
+
+```text
+  Partner systems (B2B)
+          │  HTTPS request with API key
+          ▼
+  ┌──────────────────┐
+  │   API Gateway    │  API key check, endpoint access
+  └────────┬─────────┘
+           ▼
+  ┌──────────────────┐
+  │      Lambda      │  HTTP proxy into the private network
+  └────────┬─────────┘
+           ▼
+  ┌──────────────────┐
+  │  Load Balancer   │  traffic distribution, health checks
+  └────────┬─────────┘
+           ▼
+  ┌──────────────────────────────┐
+  │   Customer master service    │  Node.js + Express
+  │   containers from ECR on EC2 │
+  └───────┬──────────────┬───────┘
+          ▼              ▼
+     ┌─────────┐   ┌─────────────────────┐
+     │  Redis  │   │  SQL Server on RDS  │
+     └─────────┘   └─────────────────────┘
+
+  CloudWatch: logs, metrics, and alarms across every layer
+```
+
+The sections below follow a request from top to bottom.
+
+## API Gateway and API Keys
+
+API Gateway is the only public entry point. It validates the API key on every request before anything reaches the service.
+
+Each partner has its own key, and each key is restricted to the endpoints that partner needs. Requests without a valid key are stopped at the edge and never use service, cache, or database resources. If a key leaks, it can be revoked without affecting any other integration. And because a partner can only reach the endpoints its integration requires, exposure of personal data stays limited.
+
+Inside AWS, IAM applies the same principle between components: each component has a role with only the permissions it needs.
+
+## Lambda as an HTTP Proxy
+
+Behind the gateway, a Lambda function acts as an HTTP proxy that forwards requests into the private network. The load balancer and service instances are never reachable from the internet.
+
+Two things matter for this layer:
+
+- The proxy stays thin. It forwards requests and does not contain business logic, so it does not become a second application to maintain.
+- Timeouts are aligned. Every hop adds latency and a possible failure point. The timeouts of the gateway, the proxy, and the service must be consistent, otherwise one layer gives up while another is still processing a request whose response nobody will receive.
+
+## Load Balancer, EC2, and ECR
+
+The load balancer distributes traffic across multiple EC2 instances running the service as containers. Images are stored in ECR, so the image that was tested is exactly the image that runs in production, and rolling back means running the previous image.
+
+The load balancer also performs **health checks** against each instance. An instance that fails them is removed from rotation, and traffic continues to the healthy instances.
+
+## Application Layer
+
+### Request validation
+
+Every request is validated against the contract before any processing happens. Missing fields, invalid formats, and unexpected values are rejected with an error that tells the partner exactly what to correct.
+
+Because the service is the source of truth, invalid data that gets stored does not stay in one place. It is returned to every partner that reads the record afterward.
+
+### API versioning
+
+The API is versioned. Breaking changes are released as a new version, while the previous version keeps working until partners migrate. This is how the service can change without asking every partner to deploy at the same moment.
+
+### Caching with Redis
+
+Frequently requested data is served from Redis instead of querying the database on every request. This lowers response times and keeps repeated reads away from the database.
+
+The main design concern for this layer is **staleness**. A cache entry is a copy of a record, and the copy can become outdated when the record changes. Cached entries expire after 60 seconds, and the entry for a record is invalidated whenever that record is updated. Partners know that responses can be served from this cache.
+
+### Database
+
+The master database runs on Microsoft SQL Server in RDS. As a managed service, RDS takes care of backups and routine maintenance.
+
+Most of the layers above exist partly to protect this one. The gateway keeps unwanted traffic out, validation keeps invalid data out, and the cache absorbs repeated reads. The database is the hardest component to scale and the most expensive to recover, so it receives only the work that actually needs it.
+
+## Failure Handling
+
+**Timeouts.** Every call to a dependency has a time limit. Without one, a slow database or cache causes requests to queue up until the service stops responding entirely. A fast, explicit error is preferable to a hanging request.
+
+**Retries.** Transient failures, such as a brief network interruption, are retried after a short delay. Retries are bounded, since each one adds load and unbounded retries across many clients can turn a small failure into a larger one.
+
+**Observability.** Health checks remove unhealthy instances from traffic. CloudWatch collects logs and metrics from every layer, and alarms notify the team when those metrics cross defined thresholds. The goal is to detect a problem before a partner reports it.

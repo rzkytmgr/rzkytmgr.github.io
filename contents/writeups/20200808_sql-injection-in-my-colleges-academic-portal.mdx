@@ -1,0 +1,105 @@
+---
+id: WU-02
+title: "SQL Injection in My College's Academic Portal"
+tag: Security
+slug: sql-injection-in-my-colleges-academic-portal
+description: >-
+    Tracing a quote and a parenthesis in an academic-year parameter to a
+    MariaDB injection, mapping its scope with UNION SELECT, and stopping before
+    any student record was read.
+date: "Aug 08, 2020"
+thumbnail: https://picsum.photos/seed/02_sql-injection-in-my-colleges-academic-portal/1200/675
+reading_time: 4 min read
+---
+
+> This is a responsible disclosure story. Everything here happened on my own college's academic portal, I stopped as soon as the issue was confirmed, and I reported it to the people who run it. Only test systems you own or have permission to assess.
+
+My college runs an academic portal that sits at the center of student life. Students use it to check their semester grades, pay tuition, count credit hours, and register for graduation. Lecturers use it too, to enter student grades. It holds the kind of data you would not want anyone else to read or change.
+
+I spent some time looking at how it worked. The part that caught my attention was a dropdown on the grades page.
+
+## The Normal Request
+
+The grades page has a dropdown for selecting an academic year. Picking a year sends a background request and loads the grades for that term. Watching the traffic in my browser's developer tools, I captured what a normal request looked like:
+
+```bash
+curl 'https://redacted/index.php?r=krs/view&i=khs' \
+  -X POST \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Cookie: PHPSESSID=redacted' \
+  --data-raw 'g=20191'
+```
+
+The application is a PHP app built on Yii 2, which is where the `index.php?r=krs/view` style routing comes from. The body is the interesting part: `g=20191` is the academic year straight from the dropdown. Every option carries a value like this, and it is sent back to the server to decide which grades to return.
+
+Any value that goes from the page into a database query is worth a closer look, so I started changing `g`.
+
+## The First Sign
+
+To check for injection, I appended a closing quote and parenthesis to the value, characters that break a query if it is concatenated in unsafely:
+
+```sql
+g=20191")
+```
+
+The server returned an HTTP 500. Two extra characters breaking the request suggests the value was concatenated into a query unescaped, and my `")` had unbalanced it.
+
+After a few more tries, I started to think the query looked roughly like this:
+
+```sql
+... AND g = "20191") OR ( ... ));
+```
+
+If that guess was right, then closing the string and the parentheses and commenting out the rest should produce a valid query again.
+
+## Confirming It
+
+I tried the smallest payload that would complete the statement and comment out whatever followed:
+
+```sql
+g=20191"))-- -
+```
+
+This time there was no error. The injection turned the broken query back into a valid one.
+
+To be sure, and to avoid relying on what showed up on the page, I used a time-based check: if the database pauses before responding, something I injected is running. I added a condition that calls `SLEEP()`:
+
+```sql
+g=20191")) OR (SELECT SLEEP(5))-- -
+```
+
+Dropped into the suspected query, that reads roughly as:
+
+```sql
+... AND g = "20191")) OR (SELECT SLEEP(5))-- -") OR ( ... ));
+```
+
+The response came back clearly delayed, which confirmed the injection. `SLEEP()` is a MySQL and MariaDB function, so the backend was one of those. The version, MariaDB 10, I read a bit later while enumerating the server.
+
+## Mapping, Then Stopping
+
+With injection confirmed, I did the minimum needed to understand the scope. I counted the result's columns with `ORDER BY`, increasing the number until the query failed. Knowing the column count let me use `UNION SELECT` to put my own output alongside the real results.
+
+From there I read the database user the application connected as, and the databases on the server. There were three, on the same server, and the account I came in through could see all of them.
+
+That is where I stopped. I did not read student records, grades, or payment data, and I did not change anything. Confirming the injection and its rough scope was enough to report it. I reported the finding to my college's IT team.
+
+## Why This Mattered
+
+A SQL injection is serious almost anywhere, but the data behind this portal made it worse:
+
+- **Grades**, which students see and lecturers enter.
+- **Tuition payments**, which is financial data.
+- **Graduation registration and credit calculations**, the records that decide whether a student can finish.
+
+Since the application's account could see all three databases, the exposure was not limited to the grades module where I found the bug.
+
+## The Fix
+
+The cause is an ordinary one: user input concatenated straight into a SQL query. The academic year came from a dropdown, which makes it easy to treat as trusted, but anything sent from the browser is under the user's control. The fix is parameterized queries, also called prepared statements, which keep input as data instead of part of the query. Yii 2 supports this through its query builder and parameter binding.
+
+## References
+
+- [OWASP: SQL Injection](https://owasp.org/www-community/attacks/SQL_Injection)
+- [OWASP: SQL Injection Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html)

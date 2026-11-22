@@ -54,6 +54,12 @@ function clickPills(window: Window, key: string) {
     pill!.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
 }
 
+function firstCategoryKey(window: Window) {
+    return window.document.querySelector<HTMLElement>(
+        "[data-filter-key]:not([data-filter-key='all'])",
+    )!.dataset.filterKey!;
+}
+
 function visibleCount(elements: HTMLElement[]) {
     return elements.filter((element) => !element.hasAttribute("hidden")).length;
 }
@@ -92,22 +98,21 @@ describe.skipIf(!hasDist)("blog filter (bundled)", () => {
         const cards = Array.from(
             document.querySelectorAll<HTMLElement>(".writeup-card"),
         );
-        expect(cards.length).toBe(11);
-        expect(visibleCount(cards)).toBe(11);
+        expect(cards.length).toBeGreaterThan(0);
+        expect(visibleCount(cards)).toBe(cards.length);
 
-        clickPills(window, "Performance");
+        const tagKey = firstCategoryKey(window);
+        clickPills(window, tagKey);
 
-        const performance = cards.filter(
-            (card) => card.dataset.filterTag === "Performance",
-        );
-        expect(performance.length).toBe(2);
-        expect(visibleCount(cards)).toBe(2);
+        const inTag = cards.filter((card) => card.dataset.filterTag === tagKey);
+        expect(inTag.length).toBeGreaterThan(0);
+        expect(visibleCount(cards)).toBe(inTag.length);
 
         const pill = document.querySelector<HTMLElement>(
-            "[data-filter-key='Performance']",
+            `[data-filter-key="${tagKey}"]`,
         )!;
         expect(pill.getAttribute("aria-pressed")).toBe("true");
-        expectPillState(window, "Performance", true);
+        expectPillState(window, tagKey, true);
         expectPillState(window, "all", false);
 
         const indicator = document.querySelector<HTMLElement>(
@@ -116,9 +121,9 @@ describe.skipIf(!hasDist)("blog filter (bundled)", () => {
         expect(indicator.style.opacity).toBe("1");
         expect(indicator.style.width).not.toBe("");
 
-        clickPills(window, "Performance");
-        expect(visibleCount(cards)).toBe(11);
-        expectPillState(window, "Performance", false);
+        clickPills(window, tagKey);
+        expect(visibleCount(cards)).toBe(cards.length);
+        expectPillState(window, tagKey, false);
         expectPillState(window, "all", true);
     });
 
@@ -135,7 +140,10 @@ describe.skipIf(!hasDist)("blog filter (bundled)", () => {
             "[data-empty-message]",
         )!;
 
-        clickPills(window, "Performance");
+        const tagKey = firstCategoryKey(window);
+        const inTag = cards.filter((card) => card.dataset.filterTag === tagKey);
+
+        clickPills(window, tagKey);
         search.value = "zzz-no-match";
         search.dispatchEvent(new window.Event("input", { bubbles: true }));
 
@@ -147,7 +155,7 @@ describe.skipIf(!hasDist)("blog filter (bundled)", () => {
         )!;
         clear.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
 
-        expect(visibleCount(cards)).toBe(2);
+        expect(visibleCount(cards)).toBe(inTag.length);
         expect(empty.hasAttribute("hidden")).toBe(true);
     });
 });
@@ -160,10 +168,10 @@ describe.skipIf(!hasDist)("showcase filter (bundled)", () => {
         const rows = Array.from(
             document.querySelectorAll<HTMLElement>("[data-showcase-row]"),
         );
-        expect(rows.length).toBe(4);
+        expect(rows.length).toBeGreaterThan(0);
 
         expect(document.querySelectorAll("[data-preview-panel]").length).toBe(
-            4,
+            rows.length,
         );
 
         const categoryKey = document.querySelector<HTMLElement>(
@@ -180,7 +188,7 @@ describe.skipIf(!hasDist)("showcase filter (bundled)", () => {
         expectPillState(window, "all", false);
 
         clickPills(window, categoryKey);
-        expect(visibleCount(rows)).toBe(4);
+        expect(visibleCount(rows)).toBe(rows.length);
         expectPillState(window, categoryKey, false);
         expectPillState(window, "all", true);
     });
@@ -223,7 +231,7 @@ describe.skipIf(!hasDist)("showcase filter (bundled)", () => {
         )!;
         clear.dispatchEvent(new window.MouseEvent("click", { bubbles: true }));
 
-        expect(visibleCount(rows)).toBe(4);
+        expect(visibleCount(rows)).toBe(rows.length);
         expect(empty.hasAttribute("hidden")).toBe(true);
     });
 
@@ -290,7 +298,7 @@ describe.skipIf(!hasDist)("lab filter (bundled)", () => {
         const rows = Array.from(
             document.querySelectorAll<HTMLElement>("[data-filter-item]"),
         );
-        expect(rows.length).toBe(4);
+        expect(rows.length).toBeGreaterThan(0);
 
         const categoryKey = document.querySelector<HTMLElement>(
             "[data-filter-key]:not([data-filter-key='all'])",
@@ -304,7 +312,7 @@ describe.skipIf(!hasDist)("lab filter (bundled)", () => {
         expect(visibleCount(rows)).toBe(inCategory.length);
 
         clickPills(window, "all");
-        expect(visibleCount(rows)).toBe(4);
+        expect(visibleCount(rows)).toBe(rows.length);
     });
 
     it("filters by search query", () => {
@@ -322,7 +330,7 @@ describe.skipIf(!hasDist)("lab filter (bundled)", () => {
         search.value = firstTitle;
         search.dispatchEvent(new window.Event("input", { bubbles: true }));
 
-        expect(visibleCount(rows)).toBeLessThanOrEqual(4);
+        expect(visibleCount(rows)).toBeLessThanOrEqual(rows.length);
         expect(
             rows.filter(
                 (row) =>

@@ -1,0 +1,228 @@
+---
+id: WU-04
+title: "PostgreSQL Advisory Locks: Coordinating Work Without Locking Rows"
+tag: Database
+slug: postgresql-advisory-locks-coordinating-work-without-locking-rows
+description: >-
+    How PostgreSQL advisory locks let you coordinate jobs, workers, and
+    migrations through the database you already run. Covers session and
+    transaction scope, choosing lock keys, inspecting held locks, and the
+    pooling pitfalls that can quietly leave a lock stuck.
+date: "Mar 16, 2024"
+thumbnail: https://picsum.photos/seed/04_postgresql-advisory-locks-coordinating-work-without-locking-rows/1200/675
+reading_time: 8 min read
+---
+
+Sooner or later, most backends run into the same problem: two processes must not do the same thing at the same time. Two instances of a cron job both send the monthly invoice email. Two workers both import the same CSV file. Two deploys both start running the database migration.
+
+The common reaction is to add another piece of infrastructure, such as Redis, ZooKeeper, or a dedicated lock service. But if your application already talks to PostgreSQL, a reliable locking mechanism is already sitting there. It is called an **advisory lock**, and using it takes a single function call.
+
+## What an Advisory Lock Is
+
+PostgreSQL takes locks on your behalf all the time. Updating a row locks that row. Altering a table locks the table. These locks exist to protect your _data_.
+
+An advisory lock works differently because it does not protect anything by itself. It is a lock on a number you choose. PostgreSQL keeps track of who holds which number, makes everyone else wait or fail, and releases the lock at the right moment. What the number actually represents is entirely up to your application, which is where the name "advisory" comes from.
+
+```sql
+-- Session A
+SELECT pg_advisory_lock(7301); -- acquired immediately
+
+-- Session B
+SELECT pg_advisory_lock(7301); -- blocks until Session A releases 7301
+```
+
+Since the lock is not attached to a row, you can use it for things that do not exist in the database at all, like a job name, an external API account, a file on S3, or a row that has not been inserted yet.
+
+## The Function Family
+
+There are quite a few advisory lock functions, but they all follow the same naming pattern, so they are easier to learn than the list makes them look:
+
+| Function                    | Scope       | Waits? | Mode      |
+| --------------------------- | ----------- | ------ | --------- |
+| `pg_advisory_lock`          | Session     | Yes    | Exclusive |
+| `pg_try_advisory_lock`      | Session     | No     | Exclusive |
+| `pg_advisory_xact_lock`     | Transaction | Yes    | Exclusive |
+| `pg_try_advisory_xact_lock` | Transaction | No     | Exclusive |
+| `pg_advisory_lock_shared`   | Session     | Yes    | Shared    |
+| `pg_advisory_unlock`        | Session     | No     | Exclusive |
+| `pg_advisory_unlock_all`    | Session     | No     | All       |
+
+Every function except `pg_advisory_unlock_all`, which takes no arguments, accepts either one `bigint` key or two `integer` keys. The `try` variants return `true` or `false` right away instead of waiting. The `_shared` variants let many sessions hold the same lock at once while still blocking anyone who asks for the exclusive version, which is the familiar readers and writers pattern.
+
+## Session Locks vs Transaction Locks
+
+This choice determines how and when the lock gets released.
+
+A **transaction-level** lock is released automatically when the transaction ends, whether it commits or rolls back. There is no unlock function for it, so there is nothing to forget.
+
+```sql
+BEGIN;
+SELECT pg_advisory_xact_lock(7301);
+-- do the protected work
+COMMIT;  -- lock released here
+```
+
+A **session-level** lock stays held until you explicitly unlock it or the connection closes. It ignores transactions completely, so even a rollback will not release it.
+
+```sql
+SELECT pg_advisory_lock(7301);
+-- do the protected work, possibly across several transactions
+SELECT pg_advisory_unlock(7301);
+```
+
+Session locks are also **reentrant**. If the same session acquires the same key three times, it has to unlock it three times before another session can take it.
+
+> [!TIP]
+> Start with transaction-level locks. Only reach for session-level locks when the protected work has to span several transactions, for example a long batch job that commits its progress in chunks.
+
+## Choosing Lock Keys
+
+Because the lock is just a number, most of the design work is agreeing on what each number means. There are two common approaches.
+
+**Two integer keys** give you a simple namespace. The first key describes the kind of resource, and the second one is its ID:
+
+```sql
+-- 1 = "invoice generation", 9001 = customer ID
+SELECT pg_try_advisory_xact_lock(1, 9001);
+```
+
+**A hashed string** is more convenient when the resource already has a natural name:
+
+```sql
+SELECT pg_try_advisory_xact_lock(hashtextextended('job:send-monthly-invoices', 0));
+```
+
+`hashtextextended` is available from PostgreSQL 11 onward and returns a `bigint`, which makes collisions very unlikely. Keep in mind that it is an internal hash function, and its output is not guaranteed to stay the same across major versions. That is perfectly fine for short-lived locks, but you should not store the hash and expect it to match after an upgrade.
+
+> [!WARNING]
+> All advisory locks in a database share a single key space. If one module locks `7301` to mean "user 7301" and another module locks `7301` to mean "job 7301", they will end up blocking each other. Document your key scheme, or use the two-key form so each module owns its own namespace.
+
+## Use Cases
+
+### Keeping a scheduled job from overlapping
+
+When every application instance runs the same scheduler, only one of them should actually do the work. A non-blocking lock handles this in a few lines:
+
+```typescript
+import { Pool } from "pg";
+
+const pool = new Pool();
+const JOB_KEY = "job:send-monthly-invoices";
+
+export async function runMonthlyInvoices() {
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        const { rows } = await client.query(
+            "SELECT pg_try_advisory_xact_lock(hashtextextended($1, 0)) AS locked",
+            [JOB_KEY],
+        );
+
+        if (!rows[0].locked) {
+            await client.query("ROLLBACK");
+            return; // another instance is already running this job
+        }
+
+        await sendMonthlyInvoices(client);
+        await client.query("COMMIT"); // lock released together with the commit
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+}
+```
+
+The other instances do not line up behind the winner. They get `false`, skip the run, and try again on the next schedule.
+
+The lock only prevents two runs from overlapping. If one instance finishes before another instance's scheduler fires, for example because of clock skew, the second instance gets the lock and runs the job again. To guarantee a single run per month, the job also has to record that the run happened and check that record after taking the lock.
+
+### Serializing work per entity
+
+Sometimes work can run in parallel in general but has to be serialized for a single entity, such as recalculating a customer's balance. Locking on the customer ID lets different customers be processed at the same time while requests for the same customer are handled one by one:
+
+```sql
+BEGIN;
+SELECT pg_advisory_xact_lock(2, :customer_id);  -- 2 = "balance recalculation"
+-- read transactions, compute the balance, write the result
+COMMIT;
+```
+
+Unlike `SELECT ... FOR UPDATE`, this also works when the row does not exist yet. That makes it a good fit for "insert if missing" flows, which would otherwise be prone to race conditions.
+
+### Running migrations safely
+
+Many migration tools rely on this exact technique. Before applying migrations, they take a session-level advisory lock on a fixed key. If two deploys start at the same moment, the second one either waits until the first has finished and then finds nothing left to apply, or fails right away, depending on the tool.
+
+## Seeing Who Holds What
+
+Advisory locks show up in `pg_locks` just like any other lock, so debugging them is fairly straightforward:
+
+```sql
+SELECT l.pid,
+       l.classid,
+       l.objid,
+       l.mode,
+       l.granted,
+       a.application_name,
+       a.query
+FROM pg_locks l
+JOIN pg_stat_activity a USING (pid)
+WHERE l.locktype = 'advisory';
+```
+
+When you lock with a single `bigint` key, the high 32 bits end up in `classid` and the low 32 bits in `objid`. With the two-key form, `classid` and `objid` hold the two keys directly. The `objsubid` column tells you which form was used: `1` for a single key and `2` for two keys.
+
+A row with `granted = false` is a session that is still waiting for the lock. When a job appears to hang, that row is usually the first thing worth checking.
+
+## Pitfalls Worth Knowing
+
+### Connection poolers in transaction mode
+
+In **transaction pooling** mode, PgBouncer may hand your application a different server connection for every transaction. Your session-level lock is taken on one server connection, and your unlock might run on another. The unlock then has no effect, and the lock stays held by a connection you no longer control.
+
+Transaction-level locks avoid this problem because the lock and the transaction always live on the same server connection. If you run behind a transaction-mode pooler, stick to `pg_advisory_xact_lock` and `pg_try_advisory_xact_lock`.
+
+### Leaked session locks in application pools
+
+The same kind of leak can happen without PgBouncer. Your code takes a session lock, throws an error before unlocking, and returns the connection to the pool. That pooled connection now holds the lock indefinitely, and every later attempt to acquire it waits or fails without any obvious reason.
+
+Always unlock in a `finally` block, or sidestep the issue entirely by using transaction-level locks.
+
+### Waiting forever
+
+`pg_advisory_lock` will wait for as long as it takes. Inside a web request, that is rarely what you want. Either use the `try` variant, or put a timeout on the call:
+
+```sql
+SET LOCAL lock_timeout = '5s';
+SELECT pg_advisory_xact_lock(7301); -- fails after 5 seconds instead of hanging
+```
+
+### Locking inside larger queries
+
+Calling a lock function inside a query that returns many rows can lock more keys than you expect:
+
+```sql
+-- Risky: LIMIT is not guaranteed to apply before the lock function runs
+SELECT pg_advisory_lock(id) FROM jobs WHERE id > 12345 LIMIT 100;
+```
+
+PostgreSQL may evaluate the function for rows that never make it into the final result, leaving behind locks your application does not know about. If you need to lock a batch, select the IDs in a subquery first and lock them afterwards.
+
+### The shared lock table is finite
+
+Advisory locks live in the same shared memory as regular locks, and its size is based on `max_locks_per_transaction` and `max_connections`. Holding hundreds of thousands of advisory locks at once can exhaust that memory and cause `out of shared memory` errors in completely unrelated queries. Lock coarse resources like a job or a customer, not every row in a table.
+
+## When Not to Use Them
+
+Advisory locks are a great fit when everything that needs to coordinate already shares a PostgreSQL database. They are a poor fit when:
+
+- The services involved do not share a database, or you would rather not couple them to one
+- The lock has to survive a database failover, since advisory locks live in memory and disappear after a restart or a switch to a replica
+- You need queue-like behavior with many workers picking up rows, where `SELECT ... FOR UPDATE SKIP LOCKED` is usually the better tool
+
+> [!NOTE]
+> The complete list of functions is in the PostgreSQL documentation under [Advisory Lock Functions](https://www.postgresql.org/docs/current/functions-admin.html#FUNCTIONS-ADVISORY-LOCKS), and their behavior is explained in [Explicit Locking](https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS).

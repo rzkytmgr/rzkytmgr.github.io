@@ -1,0 +1,122 @@
+---
+id: WU-05
+title: "Reading PostgreSQL Query Plans: Estimates, Reality, and Statistics"
+tag: Database
+slug: reading-postgresql-query-plans-estimates-reality-and-statistics
+description: >-
+    A slow query usually leaves clues in its execution plan. How to read a
+    PostgreSQL query plan, compare the planner's estimates with what actually
+    happened, and keep table statistics accurate so the planner makes better
+    choices.
+date: "Apr 07, 2024"
+thumbnail: https://picsum.photos/seed/05_reading-postgresql-query-plans-estimates-reality-and-statistics/1200/675
+reading_time: 6 min read
+---
+
+Say a query that returned in a few milliseconds yesterday now takes almost three seconds, and nothing in the code changed. Before adding an index or rewriting the SQL on a hunch, it is worth asking PostgreSQL what it is actually doing. That is exactly what `EXPLAIN` answers.
+
+One thing to clear up first: `ANALYZE` means two different things in PostgreSQL. `EXPLAIN ANALYZE` runs a query and shows what happened. The standalone `ANALYZE` command refreshes the statistics the planner uses to choose a plan. You need both, and this article covers them in that order.
+
+## Start With EXPLAIN
+
+`EXPLAIN` prints the plan PostgreSQL chose for a query, without running it. Take a `tickets` table from a support system, with about a million rows, and look up the tickets assigned to one agent:
+
+```sql
+EXPLAIN SELECT * FROM tickets WHERE assignee_id = 317;
+```
+
+```text
+Gather  (cost=1000.00..14552.13 rows=98 width=84)
+  Workers Planned: 2
+  ->  Parallel Seq Scan on tickets  (cost=0.00..13542.33 rows=41 width=84)
+        Filter: (assignee_id = 317)
+```
+
+A plan is a tree, and you read it from the most indented line outward. Here, two workers scan the whole table in parallel and `Gather` collects what they find.
+
+The numbers in parentheses are estimates. `cost` is shown as startup cost and total cost, in an abstract unit where reading one page sequentially equals `1.0`, so it is useful for comparing plans but says nothing about milliseconds. `rows` is how many rows the planner expects, and `width` is the average row size in bytes.
+
+## Then Run It With EXPLAIN ANALYZE
+
+Estimates only get you so far. Adding `ANALYZE` executes the query and puts the real numbers next to the guesses:
+
+```sql
+EXPLAIN ANALYZE SELECT * FROM tickets WHERE assignee_id = 317;
+```
+
+```text
+Gather  (cost=1000.00..14552.13 rows=98 width=84) (actual time=0.512..58.310 rows=103 loops=1)
+  Workers Planned: 2
+  Workers Launched: 2
+  ->  Parallel Seq Scan on tickets  (cost=0.00..13542.33 rows=41 width=84) (actual time=0.296..52.118 rows=34 loops=3)
+        Filter: (assignee_id = 317)
+        Rows Removed by Filter: 333299
+Planning Time: 0.104 ms
+Execution Time: 58.402 ms
+```
+
+Pay attention to `loops`. When a node runs more than once, its `actual time` and `rows` are averages per run. The scan above ran three times (two workers plus the leader), so it really returned around 102 rows, not 34.
+
+`Rows Removed by Filter: 333299` gives the rest away. Each process read a third of the table just to throw nearly all of it out. An index on `assignee_id` changes the picture completely:
+
+```text
+Bitmap Heap Scan on tickets  (cost=5.19..385.33 rows=98 width=84) (actual time=0.048..0.231 rows=103 loops=1)
+  Recheck Cond: (assignee_id = 317)
+  Heap Blocks: exact=101
+  ->  Bitmap Index Scan on tickets_assignee_id_idx  (cost=0.00..5.17 rows=98 width=0) (actual time=0.029..0.029 rows=103 loops=1)
+        Index Cond: (assignee_id = 317)
+Execution Time: 0.262 ms
+```
+
+From 58 ms down to a quarter of a millisecond, because PostgreSQL now reads only the 101 pages that hold matching rows.
+
+> [!CAUTION]
+> `EXPLAIN ANALYZE` really executes the statement, so an `UPDATE` or `DELETE` will change your data. Run it inside `BEGIN` and finish with `ROLLBACK`.
+
+It is worth adding `BUFFERS` as well, written as `EXPLAIN (ANALYZE, BUFFERS)`. It shows a line like `Buffers: shared hit=4 read=101` for each node, where `hit` means the page was already in PostgreSQL's cache and `read` means it had to be fetched. That is often the explanation for a query that is fast on your laptop and slow in production: your test simply ran on a warm cache.
+
+## Compare Estimated Rows With Actual Rows
+
+On every node, compare the estimated `rows` with the actual `rows`. Small gaps are normal. A gap of 100x is usually where a bad plan comes from.
+
+Back to the three-second query. Suppose a migration had just moved tens of thousands of open tickets over from an old helpdesk, and the plan looked like this:
+
+```text
+Nested Loop  (cost=0.86..16.91 rows=1 width=120) (actual time=0.044..2841.660 rows=48210 loops=1)
+  ->  Index Scan using tickets_status_idx on tickets t  (cost=0.43..8.45 rows=1 width=24) (actual time=0.031..41.207 rows=48210 loops=1)
+        Index Cond: (status = 'open'::text)
+  ->  Index Scan using agents_pkey on agents a  (cost=0.43..8.45 rows=1 width=96) (actual time=0.057..0.057 rows=1 loops=48210)
+        Index Cond: (id = t.assignee_id)
+```
+
+The planner expected **1** open ticket and found **48,210**. With one row, a nested loop is the obvious choice. With 48,210, it means running the inner index scan 48,210 times. Given what its statistics said, the nested loop was a reasonable choice. The statistics were just out of date.
+
+## Keep the Statistics Fresh With ANALYZE
+
+The planner never looks at your actual data while planning. It relies on statistics: row counts, the most common values in each column, and how values are distributed. The `ANALYZE` command collects those by sampling the table:
+
+```sql
+ANALYZE tickets;
+```
+
+Normally autovacuum handles this for you once roughly 10% of a table has changed. The trouble is the window between a large change and the next automatic run. In this example, 48,210 new rows in a million-row table were not enough to trigger it, so the statistics still claimed there were almost no open tickets. One manual `ANALYZE` fixed the estimate, and the planner switched to a hash join by itself.
+
+You can check when a table was last analyzed with:
+
+```sql
+SELECT last_analyze, last_autoanalyze, n_mod_since_analyze
+FROM pg_stat_user_tables
+WHERE relname = 'tickets';
+```
+
+If fresh statistics still produce bad estimates, two adjustments are worth trying. For a column with a very uneven distribution, collect more detail with `ALTER TABLE tickets ALTER COLUMN status SET STATISTICS 1000`. For columns that depend on each other, such as `city` and `zip_code`, tell the planner about the relationship with `CREATE STATISTICS ... (dependencies)`. Run `ANALYZE` again after either change.
+
+## My Checklist for a Slow Query
+
+1. Run `EXPLAIN (ANALYZE, BUFFERS)` with realistic parameters, inside a transaction if it writes.
+2. Find the node where most of the time goes, multiplying by `loops` where needed.
+3. Compare estimated and actual rows there. A large gap means running `ANALYZE` before anything else.
+4. Look for the usual suspects: a high `Rows Removed by Filter`, `Sort Method: external merge` or hash `Batches` above 1 (both mean `work_mem` was too small), and nested loops with a huge `loops` count.
+5. Change one thing, run the plan again, and compare.
+
+For long plans, tools like [explain.depesz.com](https://explain.depesz.com) and [explain.dalibo.com](https://explain.dalibo.com) make the slow parts much easier to spot. The official [Using EXPLAIN](https://www.postgresql.org/docs/current/using-explain.html) guide is also worth reading once from start to finish.

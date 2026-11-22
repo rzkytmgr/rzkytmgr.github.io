@@ -1,6 +1,16 @@
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import {
+    existsSync,
+    mkdirSync,
+    mkdtempSync,
+    readdirSync,
+    readFileSync,
+    rmSync,
+    statSync,
+    writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { contentLastModified } from "@/lib/seo/content-dates";
 
 const SITE = "https://rzkytmgr.github.io";
@@ -32,22 +42,63 @@ function read(html: string, pattern: RegExp): string | undefined {
     return pattern.exec(html)?.[1];
 }
 
+const FIXTURES: Record<string, Record<string, string>> = {
+    writeups: {
+        "20240105_older-post.mdx": 'slug: older-post\ndate: "Jan 05, 2024"',
+        "20250318_newer-post.mdx": 'slug: newer-post\ndate: "Mar 18, 2025"',
+        "20250401_undated-post.mdx": "slug: undated-post",
+        "notes.txt": 'slug: not-an-article\ndate: "Dec 31, 2025"',
+    },
+    showcase: {
+        "20250702_some-project.mdx": 'slug: some-project\ndate: "Jul 02, 2025"',
+    },
+    laboratory: {
+        "20250211_some-experiment.mdx":
+            'slug: some-experiment\ndate: "Feb 11, 2025"',
+    },
+};
+
 describe("contentLastModified", () => {
-    const dates = contentLastModified();
+    let contentDir: string;
+    let dates: Map<string, string>;
+
+    beforeAll(() => {
+        contentDir = mkdtempSync(path.join(tmpdir(), "content-dates-"));
+
+        for (const [folder, files] of Object.entries(FIXTURES)) {
+            mkdirSync(path.join(contentDir, folder));
+
+            for (const [name, frontmatter] of Object.entries(files)) {
+                writeFileSync(
+                    path.join(contentDir, folder, name),
+                    `---\n${frontmatter}\n---\n\nBody.\n`,
+                );
+            }
+        }
+
+        dates = contentLastModified(contentDir);
+    });
+
+    afterAll(() => {
+        rmSync(contentDir, { recursive: true, force: true });
+    });
 
     it("dates every article from its frontmatter", () => {
-        expect(dates.get("/blog/observability-for-small-teams/")).toBe(
-            "2026-08-22",
-        );
-        expect(dates.get("/lab/automating-ci-cd-deployment-pipeline/")).toBe(
-            "2026-10-21",
-        );
+        expect(dates.get("/blog/older-post/")).toBe("2024-01-05");
+        expect(dates.get("/blog/newer-post/")).toBe("2025-03-18");
+        expect(dates.get("/lab/some-experiment/")).toBe("2025-02-11");
+    });
+
+    it("skips entries without a date and non-MDX files", () => {
+        expect(dates.has("/blog/undated-post/")).toBe(false);
+        expect(dates.has("/blog/not-an-article/")).toBe(false);
     });
 
     it("dates listings and home by their newest entry", () => {
-        expect(dates.get("/blog/")).toBe("2026-10-30");
-        expect(dates.get("/showcase/")).toBe("2026-11-12");
-        expect(dates.get("/")).toBe("2026-11-12");
+        expect(dates.get("/blog/")).toBe("2025-03-18");
+        expect(dates.get("/lab/")).toBe("2025-02-11");
+        expect(dates.get("/showcase/")).toBe("2025-07-02");
+        expect(dates.get("/")).toBe("2025-07-02");
     });
 });
 
